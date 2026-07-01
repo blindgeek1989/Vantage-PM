@@ -1,0 +1,1370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'"/>
+<title>AccessPM</title>
+<style>
+/* ── Design tokens ─────────────────────────────────────────────────── */
+:root{
+  --font: 'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --bg:#F4F6FB; --surface:#FFF; --surface2:#EDF0F7; --border:#C2C8D8;
+  --text:#1A1F36; --muted:#4A5278; --accent:#1547C8; --accent-fg:#FFF;
+  --accent-h:#0F35A0; --danger:#C0250F; --success:#0A6B3C;
+  --warn:#7A4700; --warn-bg:#FFF3CC;
+  --focus:#1547C8; --radius:8px; --sidebar:240px;
+  --shadow:0 2px 8px rgba(26,31,54,.10);
+  --shadow-lg:0 6px 24px rgba(26,31,54,.14);
+  --fs:16px;
+}
+[data-theme=dark]{
+  --bg:#0D1117; --surface:#161B27; --surface2:#1E2536; --border:#2E3652;
+  --text:#E6EAF8; --muted:#8892B0; --accent:#5B8DEF; --accent-fg:#0D1117;
+  --accent-h:#7AAAF5; --danger:#FF7B72; --success:#3FB97A;
+  --warn:#E3A740; --warn-bg:#2A2000;
+  --focus:#5B8DEF;
+  --shadow:0 2px 8px rgba(0,0,0,.4);
+  --shadow-lg:0 6px 24px rgba(0,0,0,.6);
+}
+[data-contrast]{
+  --bg:#000; --surface:#000; --surface2:#111; --border:#FFF;
+  --text:#FFF; --muted:#FFD700; --accent:#FFD700; --accent-fg:#000;
+  --danger:#FF6B6B; --success:#00FF7F;
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:var(--fs);scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
+
+/* Skip links */
+.skip-links{position:absolute;top:0;left:0;z-index:9999;display:flex;gap:4px;padding:4px}
+.skip-link{background:var(--accent);color:var(--accent-fg);padding:8px 16px;border-radius:4px;font-size:.9rem;font-weight:600;text-decoration:none;transform:translateY(-200%);transition:transform .15s}
+.skip-link:focus{transform:translateY(0)}
+
+/* Focus */
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:4px}
+:focus:not(:focus-visible){outline:none}
+
+/* Layout */
+#app{display:flex;flex:1}
+
+/* Sidebar */
+#sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto}
+.sb-header{padding:18px 16px 12px;border-bottom:1px solid var(--border)}
+.logo{font-size:1.2rem;font-weight:800;color:var(--accent);letter-spacing:-.5px}
+.tagline{font-size:.68rem;color:var(--muted);margin-top:2px}
+.sb-footer{border-top:1px solid var(--border);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.nav-section{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:10px 16px 3px}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:9px 16px;background:none;border:none;color:var(--text);font-size:.88rem;font-family:var(--font);cursor:pointer;text-align:left;transition:background .12s}
+.nav-btn:hover{background:var(--surface2)}
+.nav-btn[aria-current=page]{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-weight:700;border-left:3px solid var(--accent);padding-left:13px}
+.nav-icon{width:20px;text-align:center;flex-shrink:0}
+.sync-status{font-size:.72rem;color:var(--muted);padding:4px 16px;min-height:18px}
+
+/* Top bar */
+#topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 26px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;margin-left:var(--sidebar)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+h1.page-title{font-size:1.1rem;font-weight:700}
+.topbar-right{display:flex;gap:9px;align-items:center}
+
+/* Main */
+#main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column}
+.content{padding:26px;flex:1}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:.88rem;font-family:var(--font);font-weight:600;cursor:pointer;border:2px solid transparent;transition:background .12s,border-color .12s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-h);border-color:var(--accent-h)}
+.btn-secondary{background:var(--surface);color:var(--text);border-color:var(--border)}
+.btn-secondary:hover{background:var(--surface2)}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-ghost{background:none;color:var(--text);border-color:transparent}
+.btn-ghost:hover{background:var(--surface2)}
+.btn-sm{padding:5px 11px;font-size:.8rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-icon{padding:7px;border-radius:6px;min-width:34px;justify-content:center}
+
+/* Cards */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+
+/* Badges */
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700}
+.badge-todo{background:#E8EEFF;color:#1547C8}
+.badge-ip{background:var(--warn-bg);color:var(--warn)}
+.badge-done{background:#D4F4E2;color:#0A6B3C}
+.badge-high{background:#FFE0DD;color:#7A1A0F}
+.badge-medium{background:var(--warn-bg);color:var(--warn)}
+.badge-low{background:var(--surface2);color:var(--muted)}
+[data-theme=dark] .badge-todo{background:#1E2D5A;color:#8ABAFF}
+[data-theme=dark] .badge-done{background:#0B2D1C;color:#3FB97A}
+
+/* Forms */
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.form-label{font-size:.86rem;font-weight:600}
+.req{color:var(--danger);margin-left:3px}
+.form-input,.form-select,.form-textarea{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:.9rem;padding:8px 11px;width:100%;transition:border-color .12s}
+.form-input:hover,.form-select:hover,.form-textarea:hover{border-color:var(--accent)}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);outline:3px solid var(--focus);outline-offset:2px}
+.form-textarea{resize:vertical;min-height:80px}
+.form-hint{font-size:.76rem;color:var(--muted)}
+.form-error{font-size:.76rem;color:var(--danger);font-weight:600}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+
+/* Tables */
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;background:var(--surface)}
+th{background:var(--surface2);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 13px;text-align:left;border-bottom:2px solid var(--border)}
+th button{background:none;border:none;color:inherit;font:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;width:100%}
+td{padding:11px 13px;font-size:.88rem;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.act-btns{display:flex;gap:6px}
+
+/* Progress */
+.prog-wrap{background:var(--surface2);border-radius:4px;height:7px;overflow:hidden}
+.prog-bar{height:100%;border-radius:4px;background:var(--accent);transition:width .3s}
+
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{text-align:center;padding:16px}
+.stat-num{font-size:2rem;font-weight:800;color:var(--accent);line-height:1}
+.stat-lbl{font-size:.72rem;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.overlay[hidden]{display:none}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;padding:26px}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:1.05rem;font-weight:700}
+.modal-close{background:none;border:2px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;font-size:1rem;padding:3px 9px;line-height:1;transition:background .12s}
+.modal-close:hover{background:var(--surface2)}
+.modal-ft{display:flex;gap:9px;justify-content:flex-end;margin-top:18px}
+
+/* Calendar */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-hdr{text-align:center;font-size:.72rem;font-weight:700;color:var(--muted);padding:5px;text-transform:uppercase}
+.cal-day{min-height:68px;padding:5px;border-radius:5px;border:1px solid var(--border);background:var(--surface);font-size:.78rem;cursor:pointer;transition:background .1s}
+.cal-day:hover{background:var(--surface2)}
+.cal-day.today{border-color:var(--accent);border-width:2px}
+.cal-day.other{opacity:.35}
+.cal-dn{font-weight:700;margin-bottom:2px}
+.cal-day.today .cal-dn{color:var(--accent)}
+.cal-ev{background:var(--accent);color:var(--accent-fg);border-radius:3px;padding:1px 4px;font-size:.65rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cal-month-lbl{font-size:1rem;font-weight:700;flex:1}
+
+/* Team */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
+.m-card{display:flex;flex-direction:column;gap:10px}
+.m-top{display:flex;align-items:center;gap:11px}
+.m-avatar{width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;flex-shrink:0}
+.m-name{font-weight:700;font-size:.92rem}
+.m-role,.m-dept{font-size:.76rem;color:var(--muted)}
+.m-email{font-size:.78rem;color:var(--accent);margin-top:3px;word-break:break-all}
+
+/* Reports */
+.rep-row{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.rep-lbl{width:110px;font-size:.83rem;font-weight:600;flex-shrink:0}
+.rep-bar{flex:1}
+.rep-pct{width:40px;text-align:right;font-size:.83rem;font-weight:700;color:var(--accent)}
+.section-h{font-size:.95rem;font-weight:700;margin-bottom:12px;padding-bottom:7px;border-bottom:2px solid var(--border)}
+.flex-between{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px}
+.filters{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px;align-items:center}
+.mt-16{margin-top:16px}
+
+/* ── Settings screen ──────────────────────────────────────────────── */
+.settings-layout{display:grid;grid-template-columns:200px 1fr;gap:0;min-height:calc(100vh - 60px)}
+.settings-nav{background:var(--surface);border-right:1px solid var(--border);padding:16px 0}
+.settings-nav-btn{display:block;width:100%;padding:9px 18px;background:none;border:none;color:var(--text);font-size:.88rem;font-family:var(--font);cursor:pointer;text-align:left;transition:background .12s;border-left:3px solid transparent}
+.settings-nav-btn:hover{background:var(--surface2)}
+.settings-nav-btn.active{color:var(--accent);font-weight:700;border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.settings-panel{padding:28px;max-width:680px}
+.settings-section{margin-bottom:32px}
+.settings-section-title{font-size:1rem;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--border);color:var(--accent)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);gap:20px;flex-wrap:wrap}
+.settings-row:last-child{border-bottom:none}
+.settings-row-label{font-size:.9rem;font-weight:600;flex:1;min-width:160px}
+.settings-row-desc{font-size:.76rem;color:var(--muted);margin-top:2px}
+.settings-row-control{flex-shrink:0}
+
+/* Toggle switch */
+.toggle{position:relative;display:inline-block;width:44px;height:24px}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:12px;cursor:pointer;transition:background .2s}
+.toggle input:checked+.toggle-track{background:var(--accent)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s}
+.toggle input:checked~.toggle-thumb{transform:translateX(20px)}
+.toggle input:focus-visible+.toggle-track{outline:3px solid var(--focus);outline-offset:2px}
+
+/* Shortcut editor */
+.shortcut-table{width:100%;border-collapse:collapse}
+.shortcut-table th{font-size:.75rem;font-weight:700;text-transform:uppercase;color:var(--muted);padding:8px 10px;text-align:left;border-bottom:2px solid var(--border);background:var(--surface2)}
+.shortcut-table td{padding:9px 10px;border-bottom:1px solid var(--border);font-size:.88rem;vertical-align:middle}
+.shortcut-table tr:last-child td{border-bottom:none}
+.shortcut-input{background:var(--surface2);border:2px solid var(--border);border-radius:6px;color:var(--text);font-family:monospace;font-size:.85rem;padding:5px 10px;width:170px;cursor:pointer}
+.shortcut-input:focus{border-color:var(--accent);outline:3px solid var(--focus);outline-offset:2px;background:var(--surface)}
+.shortcut-conflict{color:var(--danger);font-size:.75rem;margin-top:2px}
+
+/* Drive status */
+.drive-status{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);font-size:.85rem}
+.drive-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.drive-dot.connected{background:var(--success)}
+.drive-dot.disconnected{background:var(--danger)}
+
+/* Folder picker */
+.folder-list{max-height:200px;overflow-y:auto;border:2px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+.folder-item{padding:9px 12px;cursor:pointer;font-size:.88rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;transition:background .1s}
+.folder-item:last-child{border-bottom:none}
+.folder-item:hover,.folder-item:focus{background:var(--surface2);outline:none}
+.folder-item[aria-selected=true]{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);font-weight:600}
+
+/* About */
+.about-box{text-align:center;padding:32px 20px}
+.about-logo{font-size:2.5rem;font-weight:900;color:var(--accent);letter-spacing:-1px}
+.about-version{font-size:.82rem;color:var(--muted);margin-top:4px}
+.about-desc{max-width:400px;margin:16px auto;font-size:.9rem;color:var(--muted);line-height:1.6}
+
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:12px 22px;font-size:.88rem;font-weight:600;z-index:9000;transition:transform .25s,opacity .25s;opacity:0;pointer-events:none;max-width:380px;text-align:center}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+#toast.success{border-color:var(--success);color:var(--success)}
+#toast.error{border-color:var(--danger);color:var(--danger)}
+
+/* Live region */
+#live{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.hidden{display:none!important}
+
+/* Reduce motion */
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+[data-reduce-motion] *{transition:none!important;animation:none!important}
+</style>
+</head>
+<body>
+
+<nav class="skip-links" aria-label="Skip links">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a class="skip-link" href="#main-nav">Skip to navigation</a>
+</nav>
+
+<div id="live" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="toast" role="alert" aria-live="assertive"></div>
+
+<div id="app">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" aria-label="Application sidebar">
+    <div class="sb-header">
+      <div class="logo" aria-label="AccessPM application">AccessPM</div>
+      <div class="tagline" aria-hidden="true">WCAG 2.2 AA · Accessible PM</div>
+    </div>
+
+    <nav id="main-nav" aria-label="Main navigation">
+      <div class="nav-section" id="nl1">Workspace</div>
+      <ul role="list" aria-labelledby="nl1" style="list-style:none">
+        <li><button class="nav-btn" data-view="dashboard" onclick="nav('dashboard',this)" aria-current="page"><span class="nav-icon" aria-hidden="true">📊</span>Dashboard</button></li>
+        <li><button class="nav-btn" data-view="tasks"     onclick="nav('tasks',this)">    <span class="nav-icon" aria-hidden="true">✅</span>Tasks</button></li>
+        <li><button class="nav-btn" data-view="calendar"  onclick="nav('calendar',this)"> <span class="nav-icon" aria-hidden="true">📅</span>Calendar</button></li>
+        <li><button class="nav-btn" data-view="team"      onclick="nav('team',this)">     <span class="nav-icon" aria-hidden="true">👥</span>Team</button></li>
+        <li><button class="nav-btn" data-view="reports"   onclick="nav('reports',this)">  <span class="nav-icon" aria-hidden="true">📈</span>Reports</button></li>
+      </ul>
+      <div class="nav-section" id="nl2">App</div>
+      <ul role="list" aria-labelledby="nl2" style="list-style:none">
+        <li><button class="nav-btn" data-view="settings"  onclick="nav('settings',this)"> <span class="nav-icon" aria-hidden="true">⚙️</span>Settings</button></li>
+      </ul>
+    </nav>
+
+    <div class="sb-footer">
+      <div class="sync-status" id="sync-status" aria-live="polite" aria-label="Sync status"></div>
+      <button class="btn btn-secondary btn-sm" onclick="syncDrive()" id="sync-btn" aria-label="Sync with Google Drive now">
+        <span aria-hidden="true">🔄</span> Sync
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div id="main">
+    <header id="topbar" role="banner">
+      <div class="topbar-left">
+        <h1 class="page-title" id="page-title">Dashboard</h1>
+      </div>
+      <div class="topbar-right" id="topbar-actions">
+        <button class="btn btn-primary" id="primary-btn" onclick="openAddTask()" aria-haspopup="dialog">
+          <span aria-hidden="true">＋</span> Add Task
+        </button>
+      </div>
+    </header>
+
+    <main class="content" id="main-content" tabindex="-1" aria-labelledby="page-title">
+    </main>
+  </div>
+</div>
+
+<!-- ── Task modal ── -->
+<div id="task-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="tm-title">
+  <div class="modal">
+    <div class="modal-hd">
+      <h2 class="modal-title" id="tm-title">Add Task</h2>
+      <button class="modal-close" onclick="closeModal('task-modal')" aria-label="Close dialog">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="t-name">Task name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+      <input class="form-input" id="t-name" type="text" autocomplete="off" aria-required="true" aria-describedby="t-name-err"/>
+      <span class="form-error hidden" id="t-name-err" role="alert">Please enter a task name.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="t-desc">Description</label>
+      <textarea class="form-textarea" id="t-desc" aria-describedby="t-desc-hint"></textarea>
+      <span class="form-hint" id="t-desc-hint">Optional. Add context or acceptance criteria.</span>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label" for="t-assignee">Assignee</label>
+        <select class="form-select" id="t-assignee"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="t-priority">Priority</label>
+        <select class="form-select" id="t-priority">
+          <option value="high">High</option>
+          <option value="medium" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="t-status">Status</label>
+        <select class="form-select" id="t-status">
+          <option value="todo">To Do</option>
+          <option value="inprogress">In Progress</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="t-due">Due date<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <input class="form-input" id="t-due" type="date" aria-required="true" aria-describedby="t-due-err"/>
+        <span class="form-error hidden" id="t-due-err" role="alert">Please select a due date.</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="t-prog">Progress: <span id="t-prog-val">0</span>%</label>
+      <input type="range" id="t-prog" min="0" max="100" value="0" step="5" style="width:100%;accent-color:var(--accent)"
+        oninput="document.getElementById('t-prog-val').textContent=this.value"
+        aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"/>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal('task-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Member modal ── -->
+<div id="member-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="mm-title">
+  <div class="modal">
+    <div class="modal-hd">
+      <h2 class="modal-title" id="mm-title">Add Team Member</h2>
+      <button class="modal-close" onclick="closeModal('member-modal')" aria-label="Close dialog">✕</button>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label" for="m-name">Full name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <input class="form-input" id="m-name" type="text" aria-required="true"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="m-email">Email<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <input class="form-input" id="m-email" type="email" aria-required="true"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="m-role">Role<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <input class="form-input" id="m-role" type="text" placeholder="e.g. Developer" aria-required="true"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="m-dept">Department</label>
+        <input class="form-input" id="m-dept" type="text" placeholder="e.g. Engineering"/>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="m-photo">Photo URL <span class="form-hint" style="display:inline">(optional)</span></label>
+      <input class="form-input" id="m-photo" type="url" placeholder="https://" aria-describedby="m-photo-hint"/>
+      <span class="form-hint" id="m-photo-hint">Link to a profile image. Leave blank to use initials.</span>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal('member-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveMember()">Add Member</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirm modal ── -->
+<div id="confirm-modal" class="overlay" hidden role="alertdialog" aria-modal="true" aria-labelledby="cf-title" aria-describedby="cf-desc">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd">
+      <h2 class="modal-title" id="cf-title">Confirm Delete</h2>
+      <button class="modal-close" onclick="closeModal('confirm-modal')" aria-label="Close dialog">✕</button>
+    </div>
+    <p id="cf-desc">Are you sure? This cannot be undone.</p>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Cancel</button>
+      <button class="btn btn-danger" id="cf-ok">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Folder picker modal ── -->
+<div id="folder-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="fm-title">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd">
+      <h2 class="modal-title" id="fm-title">Select Google Drive Folder</h2>
+      <button class="modal-close" onclick="closeModal('folder-modal')" aria-label="Close dialog">✕</button>
+    </div>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px">Select the folder where AccessPM will store your shared data file.</p>
+    <div id="folder-list-wrap" role="listbox" aria-label="Google Drive folders" aria-required="true" style="outline:none">
+      <div style="padding:20px;text-align:center;color:var(--muted)">Loading folders…</div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal('folder-modal')">Cancel</button>
+      <button class="btn btn-primary" id="folder-ok" onclick="confirmFolder()" disabled>Select Folder</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Shortcuts help modal ── -->
+<div id="shortcuts-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="sh-title">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-hd">
+      <h2 class="modal-title" id="sh-title">Keyboard Shortcuts Reference</h2>
+      <button class="modal-close" onclick="closeModal('shortcuts-modal')" aria-label="Close dialog">✕</button>
+    </div>
+    <div id="shortcuts-list"></div>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal('shortcuts-modal')">Close</button>
+      <button class="btn btn-primary" onclick="closeModal('shortcuts-modal');nav('settings');setTimeout(()=>showSettingsTab('shortcuts'),100)">Edit Shortcuts</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+// ── State ─────────────────────────────────────────────────────────────────
+const IS_ELECTRON = typeof window.electronAPI !== 'undefined';
+
+let settings = {
+  theme:'system', language:'en', fontSize:16, reduceMotion:false, highContrast:false,
+  driveFolderId:'', driveFolderName:'', syncInterval:5,
+  shortcuts:{
+    newTask:'Alt+N', goToDashboard:'Alt+1', goToTasks:'Alt+2', goToCalendar:'Alt+3',
+    goToTeam:'Alt+4', goToReports:'Alt+5', goToSettings:'Alt+Comma',
+    saveItem:'Alt+S', closeModal:'Escape', searchTasks:'Alt+F',
+    syncDrive:'Alt+R', toggleTheme:'Alt+T', focusNav:'Alt+M', focusMain:'Alt+C',
+  },
+  notifications:true, autoSync:true, confirmOnDelete:true, dateFormat:'MM/DD/YYYY',
+  googleConnected:false, googleEmail:null, platform:'win32',
+};
+
+let systemDark = window.matchMedia('(prefers-color-scheme:dark)').matches;
+let tasks = [
+  {id:1,name:'Audit homepage for WCAG 2.2',desc:'Full audit of openfrequency.us',assignee:'Aaron Linson',priority:'high',status:'inprogress',due:'2026-05-30',progress:45},
+  {id:2,name:'Update color contrast tokens',desc:'Ensure 4.5:1 ratio on all text.',assignee:'Sam Rivera',priority:'high',status:'todo',due:'2026-06-05',progress:0},
+  {id:3,name:'Keyboard navigation review',desc:'Full keyboard test, no mouse.',assignee:'Jordan Kim',priority:'medium',status:'todo',due:'2026-06-10',progress:0},
+  {id:4,name:'Screen reader testing — JAWS',desc:'JAWS 2024 regression suite.',assignee:'Aaron Linson',priority:'high',status:'done',due:'2026-05-15',progress:100},
+  {id:5,name:'Write accessibility statement',desc:'Public-facing conformance page.',assignee:'Sam Rivera',priority:'medium',status:'inprogress',due:'2026-06-01',progress:60},
+  {id:6,name:'NVDA smoke test',desc:'Quick NVDA pass on all flows.',assignee:'Jordan Kim',priority:'low',status:'done',due:'2026-05-10',progress:100},
+];
+let members = [
+  {id:1,name:'Aaron Linson',email:'aaron@blindtech.org',role:'Accessibility Project Lead',dept:'Accessibility',photo:''},
+  {id:2,name:'Sam Rivera',email:'sam@blindtech.org',role:'Frontend Developer',dept:'Engineering',photo:''},
+  {id:3,name:'Jordan Kim',email:'jordan@blindtech.org',role:'QA Analyst',dept:'Quality Assurance',photo:''},
+];
+let nextTaskId=10, nextMemberId=10;
+let editingTaskId=null;
+let currentView='dashboard';
+let sortCol='due', sortAsc=true;
+let filterStatus='all', filterPriority='all';
+let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
+let selectedFolderId=null, selectedFolderName=null;
+let activeSettingsTab='general';
+let pendingShortcutKey=null;
+let lastSync=null;
+
+const today = new Date();
+
+// ── Init ──────────────────────────────────────────────────────────────────
+async function init() {
+  if (IS_ELECTRON) {
+    window.electronAPI.onInitSettings(s => { applySettings(s); });
+    window.electronAPI.onSystemTheme(t => { systemDark = t==='dark'; applyTheme(); });
+    window.electronAPI.onNav(action => handleNavAction(action));
+    window.electronAPI.onShowAbout(() => nav('settings', null, 'about'));
+    const s = await window.electronAPI.getSettings();
+    applySettings(s);
+    if (s.autoSync && s.googleConnected && s.driveFolderId) syncDrive();
+  } else {
+    applyTheme();
+  }
+  nav('dashboard', document.querySelector('[data-view=dashboard]'));
+  registerKeyboardShortcuts();
+}
+
+function applySettings(s) {
+  Object.assign(settings, s);
+  applyTheme();
+  document.documentElement.lang = settings.language;
+  document.documentElement.style.setProperty('--fs', settings.fontSize+'px');
+  if (settings.reduceMotion) document.documentElement.setAttribute('data-reduce-motion','');
+  else document.documentElement.removeAttribute('data-reduce-motion');
+  if (settings.highContrast) document.documentElement.setAttribute('data-contrast','');
+  else document.documentElement.removeAttribute('data-contrast');
+  registerKeyboardShortcuts();
+}
+
+function applyTheme() {
+  const dark = settings.theme==='dark' || (settings.theme==='system' && systemDark);
+  document.documentElement.setAttribute('data-theme', dark?'dark':'');
+}
+
+// ── Keyboard shortcuts ────────────────────────────────────────────────────
+function registerKeyboardShortcuts() {
+  document.onkeydown = null;
+  document.addEventListener('keydown', handleKey, {capture:true});
+}
+
+function handleKey(e) {
+  // Skip if typing in an input/textarea
+  const tag = document.activeElement?.tagName;
+  const isTyping = ['INPUT','TEXTAREA','SELECT'].includes(tag) || document.activeElement?.isContentEditable;
+  if (isTyping && e.key !== 'Escape') return;
+
+  const sc = settings.shortcuts;
+  const combo = buildCombo(e);
+
+  const map = {
+    [sc.newTask]:       ()=>{ if(!document.querySelector('.overlay:not([hidden])')) openAddTask(); },
+    [sc.goToDashboard]: ()=>nav('dashboard'),
+    [sc.goToTasks]:     ()=>nav('tasks'),
+    [sc.goToCalendar]:  ()=>nav('calendar'),
+    [sc.goToTeam]:      ()=>nav('team'),
+    [sc.goToReports]:   ()=>nav('reports'),
+    [sc.goToSettings]:  ()=>nav('settings'),
+    [sc.syncDrive]:     ()=>syncDrive(),
+    [sc.toggleTheme]:   ()=>toggleTheme(),
+    [sc.focusNav]:      ()=>{ document.getElementById('main-nav')?.querySelector('button')?.focus(); },
+    [sc.focusMain]:     ()=>{ document.getElementById('main-content')?.focus(); },
+    [sc.searchTasks]:   ()=>{ nav('tasks'); setTimeout(()=>document.getElementById('search-input')?.focus(),100); },
+    [sc.closeModal]:    ()=>closeTopModal(),
+  };
+
+  if (map[combo]) { e.preventDefault(); map[combo](); }
+}
+
+function buildCombo(e) {
+  const parts = [];
+  if (e.ctrlKey)  parts.push('Ctrl');
+  if (e.altKey)   parts.push('Alt');
+  if (e.shiftKey) parts.push('Shift');
+  if (e.metaKey)  parts.push('Meta');
+  const key = e.key === ',' ? 'Comma' : e.key;
+  if (!['Control','Alt','Shift','Meta'].includes(key)) parts.push(key);
+  return parts.join('+');
+}
+
+function handleNavAction(action) {
+  const navMap = {
+    goToDashboard: ()=>nav('dashboard'), goToTasks: ()=>nav('tasks'),
+    goToCalendar:  ()=>nav('calendar'),  goToTeam:  ()=>nav('team'),
+    goToReports:   ()=>nav('reports'),   goToSettings:()=>nav('settings'),
+    newTask:       ()=>openAddTask(),    syncDrive: ()=>syncDrive(),
+    toggleTheme:   ()=>toggleTheme(),
+    focusNav:      ()=>document.getElementById('main-nav')?.querySelector('button')?.focus(),
+    focusMain:     ()=>document.getElementById('main-content')?.focus(),
+    searchTasks:   ()=>{ nav('tasks'); setTimeout(()=>document.getElementById('search-input')?.focus(),100); },
+    showShortcuts: ()=>showShortcutsModal(),
+  };
+  if (navMap[action]) navMap[action]();
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────
+function nav(view, btn, settingsTab) {
+  currentView = view;
+  document.querySelectorAll('.nav-btn').forEach(b=>b.removeAttribute('aria-current'));
+  const target = btn || document.querySelector(`[data-view=${view}]`);
+  if (target) target.setAttribute('aria-current','page');
+
+  const titles = {dashboard:'Dashboard',tasks:'Tasks',calendar:'Calendar',team:'Team',reports:'Reports',settings:'Settings'};
+  document.getElementById('page-title').textContent = titles[view] || view;
+
+  const pb = document.getElementById('primary-btn');
+  if (view==='team') { pb.textContent='＋ Add Member'; pb.onclick=openAddMember; }
+  else if (view==='settings') { pb.textContent=''; pb.style.display='none'; }
+  else { pb.textContent='＋ Add Task'; pb.onclick=openAddTask; pb.style.display=''; }
+
+  const root = document.getElementById('main-content');
+  if (view==='dashboard')  root.innerHTML = renderDashboard();
+  else if (view==='tasks') root.innerHTML = renderTasks();
+  else if (view==='calendar') { root.innerHTML = renderCalendar(); bindCalNav(); }
+  else if (view==='team')  root.innerHTML = renderTeam();
+  else if (view==='reports') root.innerHTML = renderReports();
+  else if (view==='settings') { root.innerHTML = renderSettings(); bindSettings(); if(settingsTab) showSettingsTab(settingsTab); }
+  root.focus();
+}
+
+// ── Dashboard ─────────────────────────────────────────────────────────────
+function renderDashboard() {
+  const total=tasks.length, done=tasks.filter(t=>t.status==='done').length;
+  const todo=tasks.filter(t=>t.status==='todo').length, ip=tasks.filter(t=>t.status==='inprogress').length;
+  const overdue=tasks.filter(t=>t.status!=='done'&&new Date(t.due+'T00:00')<today).length;
+  const avg=total?Math.round(tasks.reduce((a,t)=>a+t.progress,0)/total):0;
+  const recent=[...tasks].sort((a,b)=>new Date(b.due)-new Date(a.due)).slice(0,5);
+  return `
+  <section aria-label="Summary statistics">
+    <div class="stat-grid" role="list">
+      ${[['Total',total,'var(--accent)'],['To Do',todo,'var(--warn)'],['In Progress',ip,'var(--accent)'],['Done',done,'var(--success)'],['Overdue',overdue,'var(--danger)'],['Avg Progress',avg+'%','var(--accent)']].map(([l,v,c])=>`
+      <div class="card stat-card" role="listitem"><div class="stat-num" style="color:${c}">${v}</div><div class="stat-lbl">${l}</div></div>`).join('')}
+    </div>
+  </section>
+  <section class="mt-16" aria-label="Recent tasks">
+    <h2 class="section-h">Recent Tasks</h2>
+    <div class="tbl-wrap"><table aria-label="Recent tasks">
+      <thead><tr><th scope="col">Task</th><th scope="col">Assignee</th><th scope="col">Status</th><th scope="col">Due</th><th scope="col">Progress</th></tr></thead>
+      <tbody>${recent.map(t=>`<tr><td>${esc(t.name)}</td><td>${esc(t.assignee)}</td><td>${sBadge(t.status)}</td><td>${fmtDate(t.due)}</td><td><div class="prog-wrap" role="progressbar" aria-valuenow="${t.progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Progress ${t.progress}%" style="min-width:80px"><div class="prog-bar" style="width:${t.progress}%"></div></div></td></tr>`).join('')}</tbody>
+    </table></div>
+  </section>`;
+}
+
+// ── Tasks ─────────────────────────────────────────────────────────────────
+let searchText='';
+function renderTasks() {
+  let filtered=tasks.filter(t=>{
+    if(filterStatus!=='all'&&t.status!==filterStatus) return false;
+    if(filterPriority!=='all'&&t.priority!==filterPriority) return false;
+    if(searchText&&!t.name.toLowerCase().includes(searchText.toLowerCase())&&!t.assignee.toLowerCase().includes(searchText.toLowerCase())) return false;
+    return true;
+  });
+  filtered.sort((a,b)=>{
+    let av=a[sortCol],bv=b[sortCol];
+    if(sortCol==='due'){av=new Date(av);bv=new Date(bv);}
+    return sortAsc?(av<bv?-1:av>bv?1:0):(av>bv?-1:av<bv?1:0);
+  });
+  const si=col=>sortCol===col?(sortAsc?' ↑':' ↓'):'';
+  const sa=col=>sortCol===col?(sortAsc?'ascending':'descending'):'none';
+  return `
+  <div class="filters" role="search" aria-label="Task filters">
+    <label for="search-input" class="sr-only">Search tasks</label>
+    <input id="search-input" class="form-input" type="search" placeholder="Search tasks…" value="${esc(searchText)}" style="width:200px" oninput="searchText=this.value;renderView()" aria-label="Search tasks by name or assignee"/>
+    <label for="fs" class="sr-only">Filter by status</label>
+    <select id="fs" class="form-select" style="width:auto" onchange="filterStatus=this.value;renderView()" aria-label="Filter by status">
+      <option value="all">All Statuses</option>
+      <option value="todo" ${filterStatus==='todo'?'selected':''}>To Do</option>
+      <option value="inprogress" ${filterStatus==='inprogress'?'selected':''}>In Progress</option>
+      <option value="done" ${filterStatus==='done'?'selected':''}>Done</option>
+    </select>
+    <label for="fp" class="sr-only">Filter by priority</label>
+    <select id="fp" class="form-select" style="width:auto" onchange="filterPriority=this.value;renderView()" aria-label="Filter by priority">
+      <option value="all">All Priorities</option>
+      <option value="high" ${filterPriority==='high'?'selected':''}>High</option>
+      <option value="medium" ${filterPriority==='medium'?'selected':''}>Medium</option>
+      <option value="low" ${filterPriority==='low'?'selected':''}>Low</option>
+    </select>
+    <span aria-live="polite" style="font-size:.82rem;color:var(--muted)">${filtered.length} task${filtered.length!==1?'s':''} shown</span>
+  </div>
+  <div class="tbl-wrap"><table aria-label="Tasks, sortable columns">
+    <thead><tr>
+      <th scope="col"><button onclick="setSort('name')" aria-sort="${sa('name')}">Task${si('name')}</button></th>
+      <th scope="col"><button onclick="setSort('assignee')" aria-sort="${sa('assignee')}">Assignee${si('assignee')}</button></th>
+      <th scope="col"><button onclick="setSort('priority')" aria-sort="${sa('priority')}">Priority${si('priority')}</button></th>
+      <th scope="col"><button onclick="setSort('status')" aria-sort="${sa('status')}">Status${si('status')}</button></th>
+      <th scope="col"><button onclick="setSort('due')" aria-sort="${sa('due')}">Due${si('due')}</button></th>
+      <th scope="col">Progress</th>
+      <th scope="col">Actions</th>
+    </tr></thead>
+    <tbody>${filtered.length===0?`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No tasks match your filters.</td></tr>`:
+      filtered.map(t=>`<tr>
+        <td><strong>${esc(t.name)}</strong>${t.desc?`<br><span style="font-size:.76rem;color:var(--muted)">${esc(t.desc.slice(0,55))}${t.desc.length>55?'…':''}</span>`:''}</td>
+        <td>${esc(t.assignee)}</td>
+        <td>${pBadge(t.priority)}</td>
+        <td>${sBadge(t.status)}</td>
+        <td>${fmtDate(t.due)}${new Date(t.due+'T00:00')<today&&t.status!=='done'?` <span class="badge badge-high" aria-label="Overdue">!</span>`:''}</td>
+        <td><div style="display:flex;align-items:center;gap:7px;min-width:90px"><div class="prog-wrap" role="progressbar" aria-valuenow="${t.progress}" aria-valuemin="0" aria-valuemax="100" aria-label="Progress ${t.progress}%" style="flex:1"><div class="prog-bar" style="width:${t.progress}%"></div></div><span style="font-size:.75rem;color:var(--muted);width:30px;text-align:right">${t.progress}%</span></div></td>
+        <td><div class="act-btns"><button class="btn btn-secondary btn-sm" onclick="openEditTask(${t.id})" aria-label="Edit task: ${esc(t.name)}">Edit</button><button class="btn btn-danger btn-sm" onclick="confirmDelete('task',${t.id},'${esc(t.name)}')" aria-label="Delete task: ${esc(t.name)}">Delete</button></div></td>
+      </tr>`).join('')}
+    </tbody>
+  </table></div>`;
+}
+function setSort(col){if(sortCol===col)sortAsc=!sortAsc;else{sortCol=col;sortAsc=true;}renderView();announce(`Sorted by ${col}, ${sortAsc?'ascending':'descending'}.`);}
+function renderView(){const root=document.getElementById('main-content');if(currentView==='tasks')root.innerHTML=renderTasks();}
+
+// ── Calendar ──────────────────────────────────────────────────────────────
+function renderCalendar(){
+  const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const first=new Date(calYear,calMonth,1),last=new Date(calYear,calMonth+1,0).getDate(),dow=first.getDay();
+  const byDate={};tasks.forEach(t=>{if(!byDate[t.due])byDate[t.due]=[];byDate[t.due].push(t);});
+  let cells='';
+  const total=Math.ceil((dow+last)/7)*7;
+  for(let i=0,day=1;i<total;i++){
+    if(i<dow||day>last){cells+=`<div class="cal-day other" aria-hidden="true"></div>`;continue;}
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isTod=calYear===today.getFullYear()&&calMonth===today.getMonth()&&day===today.getDate();
+    const dts=byDate[ds]||[];
+    const lbl=`${MONTHS[calMonth]} ${day}${isTod?' today':''}${dts.length?`, ${dts.length} task${dts.length>1?'s':''}`:''}.`;
+    cells+=`<div class="cal-day${isTod?' today':''}" tabindex="0" role="button" aria-label="${lbl}"><div class="cal-dn" aria-hidden="true">${day}</div>${dts.slice(0,2).map(t=>`<div class="cal-ev" title="${esc(t.name)}">${esc(t.name)}</div>`).join('')}${dts.length>2?`<div style="font-size:.65rem;color:var(--muted)">+${dts.length-2} more</div>`:''}</div>`;
+    day++;
+  }
+  return `<div class="card"><div class="cal-nav"><button class="btn btn-secondary btn-sm" id="cal-prev" aria-label="Previous month">‹ Prev</button><div class="cal-month-lbl" aria-live="polite">${MONTHS[calMonth]} ${calYear}</div><button class="btn btn-secondary btn-sm" id="cal-next" aria-label="Next month">Next ›</button></div><div class="cal-grid" role="grid" aria-label="Calendar ${MONTHS[calMonth]} ${calYear}"><div class="cal-hdr" role="columnheader" aria-label="Sunday">Sun</div><div class="cal-hdr" role="columnheader" aria-label="Monday">Mon</div><div class="cal-hdr" role="columnheader" aria-label="Tuesday">Tue</div><div class="cal-hdr" role="columnheader" aria-label="Wednesday">Wed</div><div class="cal-hdr" role="columnheader" aria-label="Thursday">Thu</div><div class="cal-hdr" role="columnheader" aria-label="Friday">Fri</div><div class="cal-hdr" role="columnheader" aria-label="Saturday">Sat</div>${cells}</div></div>`;
+}
+function bindCalNav(){
+  document.getElementById('cal-prev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}document.getElementById('main-content').innerHTML=renderCalendar();bindCalNav();};
+  document.getElementById('cal-next').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++;}document.getElementById('main-content').innerHTML=renderCalendar();bindCalNav();};
+}
+
+// ── Team ──────────────────────────────────────────────────────────────────
+function renderTeam(){
+  return `<div class="team-grid" role="list" aria-label="Team members">${members.map(m=>`
+  <article class="card m-card" role="listitem" aria-label="Team member ${esc(m.name)}">
+    <div class="m-top">
+      ${m.photo?`<img src="${esc(m.photo)}" alt="${esc(m.name)} profile photo" class="m-avatar" style="object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:``}
+      <div class="m-avatar" style="${m.photo?'display:none':''}" aria-hidden="true">${initials(m.name)}</div>
+      <div>
+        <div class="m-name">${esc(m.name)}</div>
+        <div class="m-role">${esc(m.role)}</div>
+        <div class="m-dept">${esc(m.dept)}</div>
+        <div class="m-email"><a href="mailto:${esc(m.email)}" aria-label="Email ${esc(m.name)}">${esc(m.email)}</a></div>
+      </div>
+    </div>
+    <div class="act-btns">
+      <button class="btn btn-danger btn-sm" onclick="confirmDelete('member',${m.id},'${esc(m.name)}')" aria-label="Delete team member ${esc(m.name)}">Remove</button>
+    </div>
+  </article>`).join('')}</div>`;
+}
+
+// ── Reports ───────────────────────────────────────────────────────────────
+function renderReports(){
+  const total=tasks.length||1;
+  const byStatus=[{l:'To Do',c:tasks.filter(t=>t.status==='todo').length,col:'var(--warn)'},{l:'In Progress',c:tasks.filter(t=>t.status==='inprogress').length,col:'var(--accent)'},{l:'Done',c:tasks.filter(t=>t.status==='done').length,col:'var(--success)'}];
+  const byPri=[{l:'High',c:tasks.filter(t=>t.priority==='high').length,col:'var(--danger)'},{l:'Medium',c:tasks.filter(t=>t.priority==='medium').length,col:'var(--warn)'},{l:'Low',c:tasks.filter(t=>t.priority==='low').length,col:'var(--success)'}];
+  const byM=members.map(m=>({n:m.name,c:tasks.filter(t=>t.assignee===m.name).length,d:tasks.filter(t=>t.assignee===m.name&&t.status==='done').length}));
+  const row=item=>{const p=Math.round((item.c/total)*100);return `<div class="rep-row"><span class="rep-lbl">${item.l}</span><div class="rep-bar"><div class="prog-wrap" role="progressbar" aria-valuenow="${p}" aria-valuemin="0" aria-valuemax="100" aria-label="${item.l}: ${item.c} tasks, ${p}%"><div class="prog-bar" style="width:${p}%;background:${item.col}"></div></div></div><span class="rep-pct" style="color:${item.col}">${item.c}</span></div>`;};
+  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px">
+    <section class="card" aria-label="Tasks by status"><h2 class="section-h">By Status</h2>${byStatus.map(row).join('')}</section>
+    <section class="card" aria-label="Tasks by priority"><h2 class="section-h">By Priority</h2>${byPri.map(row).join('')}</section>
+  </div>
+  <section class="card" aria-label="Tasks by team member"><h2 class="section-h">By Team Member</h2>
+    <div class="tbl-wrap" style="border:none;box-shadow:none"><table aria-label="Task counts per member">
+      <thead><tr><th scope="col">Name</th><th scope="col">Assigned</th><th scope="col">Completed</th><th scope="col">Rate</th></tr></thead>
+      <tbody>${byM.map(m=>{const r=m.c?Math.round((m.d/m.c)*100):0;return`<tr><td><strong>${esc(m.n)}</strong></td><td>${m.c}</td><td>${m.d}</td><td><div style="display:flex;align-items:center;gap:7px"><div class="prog-wrap" role="progressbar" aria-valuenow="${r}" aria-valuemin="0" aria-valuemax="100" aria-label="Completion ${r}%" style="flex:1;min-width:70px"><div class="prog-bar" style="width:${r}%;background:var(--success)"></div></div><span style="font-size:.8rem;font-weight:700;color:var(--success)">${r}%</span></div></td></tr>`;}).join('')}</tbody>
+    </table></div>
+  </section>`;
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────
+const SHORTCUT_LABELS = {
+  newTask:'New Task',goToDashboard:'Go to Dashboard',goToTasks:'Go to Tasks',
+  goToCalendar:'Go to Calendar',goToTeam:'Go to Team',goToReports:'Go to Reports',
+  goToSettings:'Open Settings',saveItem:'Save Item',closeModal:'Close Modal / Dialog',
+  searchTasks:'Search Tasks',syncDrive:'Sync with Drive',toggleTheme:'Toggle Theme',
+  focusNav:'Focus Navigation',focusMain:'Focus Main Content',
+};
+
+const SHORTCUT_SR_NOTES = {
+  closeModal:'Note: Escape is used by JAWS, NVDA, and VoiceOver to exit virtual/browse mode. Changing this may conflict.',
+  focusNav:'Note: Alt+M may conflict with JAWS menu. Consider Alt+Shift+M.',
+  focusMain:'Note: Alt+C may conflict with NVDA. Consider Alt+Shift+C.',
+  goToSettings:'Note: Comma key is used for settings in many apps. Alt+Comma is generally safe.',
+};
+
+function renderSettings() {
+  return `
+  <div class="settings-layout">
+    <nav class="settings-nav" aria-label="Settings categories">
+      ${[['general','⚙️ General'],['appearance','🎨 Appearance'],['accessibility','♿ Accessibility'],['drive','☁️ Google Drive'],['shortcuts','⌨️ Shortcuts'],['notifications','🔔 Notifications'],['about','ℹ️ About']].map(([k,l])=>`
+      <button class="settings-nav-btn${activeSettingsTab===k?' active':''}" onclick="showSettingsTab('${k}')" aria-current="${activeSettingsTab===k?'true':'false'}">${l}</button>`).join('')}
+    </nav>
+    <div class="settings-panel" id="settings-panel" role="region" aria-live="polite" aria-label="Settings panel">
+      ${renderSettingsTab(activeSettingsTab)}
+    </div>
+  </div>`;
+}
+
+function showSettingsTab(tab) {
+  activeSettingsTab = tab;
+  document.querySelectorAll('.settings-nav-btn').forEach(b=>{
+    const isActive = b.textContent.toLowerCase().includes(tab) || b.onclick?.toString().includes(`'${tab}'`);
+    b.classList.toggle('active', b.getAttribute('onclick')?.includes(`'${tab}'`));
+    b.setAttribute('aria-current', b.getAttribute('onclick')?.includes(`'${tab}'`) ? 'true' : 'false');
+  });
+  const panel = document.getElementById('settings-panel');
+  if(panel) { panel.innerHTML = renderSettingsTab(tab); bindSettings(); }
+  announce(`${tab} settings loaded.`);
+}
+
+function renderSettingsTab(tab) {
+  if(tab==='general')      return renderSettingsGeneral();
+  if(tab==='appearance')   return renderSettingsAppearance();
+  if(tab==='accessibility')return renderSettingsAccessibility();
+  if(tab==='drive')        return renderSettingsDrive();
+  if(tab==='shortcuts')    return renderSettingsShortcuts();
+  if(tab==='notifications')return renderSettingsNotifications();
+  if(tab==='about')        return renderSettingsAbout();
+  return '';
+}
+
+function renderSettingsGeneral() {
+  return `
+  <div class="settings-section">
+    <h2 class="settings-section-title">General</h2>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Language</div><div class="settings-row-desc">Sets the display language for the application interface.</div></div>
+      <div class="settings-row-control">
+        <select class="form-select" style="width:160px" onchange="saveSetting('language',this.value)" aria-label="Select language">
+          <option value="en" ${settings.language==='en'?'selected':''}>English</option>
+          <option value="es" ${settings.language==='es'?'selected':''}>Español</option>
+          <option value="fr" ${settings.language==='fr'?'selected':''}>Français</option>
+          <option value="de" ${settings.language==='de'?'selected':''}>Deutsch</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Date Format</div><div class="settings-row-desc">How dates are displayed throughout the app.</div></div>
+      <div class="settings-row-control">
+        <select class="form-select" style="width:160px" onchange="saveSetting('dateFormat',this.value)" aria-label="Select date format">
+          <option value="MM/DD/YYYY" ${settings.dateFormat==='MM/DD/YYYY'?'selected':''}>MM/DD/YYYY</option>
+          <option value="DD/MM/YYYY" ${settings.dateFormat==='DD/MM/YYYY'?'selected':''}>DD/MM/YYYY</option>
+          <option value="YYYY-MM-DD" ${settings.dateFormat==='YYYY-MM-DD'?'selected':''}>YYYY-MM-DD</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Confirm on Delete</div><div class="settings-row-desc">Show a confirmation dialog before deleting any item.</div></div>
+      <div class="settings-row-control">${toggle('confirmOnDelete',settings.confirmOnDelete)}</div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Auto-Sync with Drive</div><div class="settings-row-desc">Automatically sync data with Google Drive at the interval below.</div></div>
+      <div class="settings-row-control">${toggle('autoSync',settings.autoSync)}</div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Sync Interval</div><div class="settings-row-desc">How often to automatically sync with Google Drive (minutes).</div></div>
+      <div class="settings-row-control">
+        <select class="form-select" style="width:100px" onchange="saveSetting('syncInterval',parseInt(this.value))" aria-label="Sync interval in minutes">
+          ${[1,2,5,10,15,30].map(v=>`<option value="${v}" ${settings.syncInterval===v?'selected':''}>${v} min</option>`).join('')}
+        </select>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSettingsAppearance() {
+  return `
+  <div class="settings-section">
+    <h2 class="settings-section-title">Appearance</h2>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Theme</div><div class="settings-row-desc">Color theme for the application. "System" follows your OS setting.</div></div>
+      <div class="settings-row-control">
+        <select class="form-select" style="width:140px" onchange="saveSetting('theme',this.value);applyTheme()" aria-label="Select theme">
+          <option value="system" ${settings.theme==='system'?'selected':''}>System default</option>
+          <option value="light"  ${settings.theme==='light'?'selected':''}>Light</option>
+          <option value="dark"   ${settings.theme==='dark'?'selected':''}>Dark</option>
+        </select>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Base Font Size</div><div class="settings-row-desc">Adjusts all text size proportionally. Default is 16px.</div></div>
+      <div class="settings-row-control" style="display:flex;align-items:center;gap:10px">
+        <input type="range" min="12" max="24" step="1" value="${settings.fontSize}" style="width:120px;accent-color:var(--accent)"
+          oninput="this.nextElementSibling.textContent=this.value+'px';saveSetting('fontSize',parseInt(this.value));document.documentElement.style.setProperty('--fs',this.value+'px')"
+          aria-label="Font size" aria-valuemin="12" aria-valuemax="24" aria-valuenow="${settings.fontSize}"/>
+        <span aria-live="polite" style="font-size:.85rem;font-weight:600;min-width:40px">${settings.fontSize}px</span>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderSettingsAccessibility() {
+  return `
+  <div class="settings-section">
+    <h2 class="settings-section-title">Accessibility</h2>
+    <div class="settings-row">
+      <div><div class="settings-row-label">High Contrast Mode</div><div class="settings-row-desc">Maximum contrast — black/white/gold palette. Recommended for low-vision users.</div></div>
+      <div class="settings-row-control">${toggle('highContrast',settings.highContrast,'applyContrast()')}</div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Reduce Motion</div><div class="settings-row-desc">Disables all transitions and animations. Helpful for vestibular or motion sensitivity.</div></div>
+      <div class="settings-row-control">${toggle('reduceMotion',settings.reduceMotion,'applyMotion()')}</div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Screen Reader Optimization</div><div class="settings-row-desc">AccessPM is built for JAWS, NVDA, and VoiceOver. All dialogs use aria-modal, live regions announce changes, and focus is managed on every interaction.</div></div>
+      <div class="settings-row-control"><span class="badge badge-done" style="font-size:.78rem">Always Active</span></div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">WCAG 2.2 Conformance Level</div><div class="settings-row-desc">This application targets Level AA conformance. See Help menu for the full conformance statement.</div></div>
+      <div class="settings-row-control"><span class="badge badge-done" style="font-size:.78rem">AA Targeted</span></div>
+    </div>
+  </div>`;
+}
+
+function applyContrast(){const v=settings.highContrast;if(v)document.documentElement.setAttribute('data-contrast','');else document.documentElement.removeAttribute('data-contrast');}
+function applyMotion(){const v=settings.reduceMotion;if(v)document.documentElement.setAttribute('data-reduce-motion','');else document.documentElement.removeAttribute('data-reduce-motion');}
+
+function renderSettingsDrive() {
+  const connected = settings.googleConnected;
+  return `
+  <div class="settings-section">
+    <h2 class="settings-section-title">Google Drive Storage</h2>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:16px;line-height:1.6">
+      AccessPM stores your team data in a single <code>accesspm-data.json</code> file inside a Google Drive folder you choose.
+      All team members should point to the same folder to share data.
+    </p>
+
+    <div class="settings-row">
+      <div><div class="settings-row-label">Google Account</div><div class="settings-row-desc">${connected?`Signed in as <strong>${esc(settings.googleEmail||'')}</strong>`:'Not connected to Google.'}</div></div>
+      <div class="settings-row-control">
+        ${connected
+          ? `<button class="btn btn-danger btn-sm" onclick="signOut()" aria-label="Sign out of Google account">Sign Out</button>`
+          : `<button class="btn btn-primary btn-sm" onclick="signIn()" aria-label="Sign in with Google">Sign in with Google</button>`}
+      </div>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">Drive Folder</div>
+        <div class="settings-row-desc">
+          ${settings.driveFolderName
+            ? `Currently using: <strong>${esc(settings.driveFolderName)}</strong>`
+            : 'No folder selected. Click to choose your project management folder.'}
+        </div>
+      </div>
+      <div class="settings-row-control">
+        <button class="btn btn-secondary btn-sm" onclick="openFolderPicker()" ${!connected?'disabled':''} aria-label="Choose Google Drive folder" aria-describedby="folder-hint">
+          📁 Choose Folder
+        </button>
+      </div>
+    </div>
+    <div id="folder-hint" style="font-size:.76rem;color:var(--muted);margin-top:-6px">
+      ${!connected?'Sign in to Google first to browse your Drive folders.':''}
+    </div>
+
+    <div style="margin-top:20px">
+      <div class="drive-status" aria-label="Drive connection status: ${connected&&settings.driveFolderId?'Connected':'Not fully configured'}">
+        <div class="drive-dot ${connected&&settings.driveFolderId?'connected':'disconnected'}" aria-hidden="true"></div>
+        <span>${connected&&settings.driveFolderId?`Connected — folder: ${esc(settings.driveFolderName)}`:'Not fully configured — sign in and choose a folder.'}</span>
+      </div>
+    </div>
+
+    ${connected&&settings.driveFolderId?`
+    <div style="margin-top:16px;display:flex;gap:10px">
+      <button class="btn btn-primary btn-sm" onclick="syncDrive()" aria-label="Sync with Google Drive now">🔄 Sync Now</button>
+      <span id="last-sync-label" style="font-size:.8rem;color:var(--muted);align-self:center">${lastSync?`Last synced: ${lastSync}`:''}</span>
+    </div>`:''}
+
+    <div style="margin-top:24px;padding:14px;background:var(--surface2);border-radius:var(--radius);border:1px solid var(--border)">
+      <div style="font-weight:700;font-size:.85rem;margin-bottom:8px">⚙️ Google Cloud Console Setup</div>
+      <ol style="font-size:.82rem;color:var(--muted);line-height:2;padding-left:20px">
+        <li>Go to <strong>console.cloud.google.com</strong> and create a project.</li>
+        <li>Enable the <strong>Google Drive API</strong>.</li>
+        <li>Create OAuth 2.0 credentials (Desktop app type).</li>
+        <li>Set <strong>http://localhost:42813</strong> as an authorized redirect URI.</li>
+        <li>Set <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> as environment variables before launching.</li>
+      </ol>
+    </div>
+  </div>`;
+}
+
+function renderSettingsShortcuts() {
+  const sc = settings.shortcuts;
+  const def = settings.defaultShortcuts || {};
+  const conflicts = findConflicts(sc);
+
+  return `
+  <div class="settings-section">
+    <h2 class="settings-section-title">Keyboard Shortcuts</h2>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px;line-height:1.6">
+      Click any shortcut field and press your desired key combination. Changes are saved immediately.
+      <br>Shortcuts marked with ⚠️ may conflict with common screen reader commands in JAWS, NVDA, or VoiceOver.
+    </p>
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+      <button class="btn btn-secondary btn-sm" onclick="resetShortcuts()" aria-label="Reset all shortcuts to defaults">Reset to Defaults</button>
+      <button class="btn btn-secondary btn-sm" onclick="showShortcutsModal()" aria-label="View all shortcuts reference">View Reference</button>
+    </div>
+    <div class="tbl-wrap">
+      <table class="shortcut-table" aria-label="Keyboard shortcut assignments">
+        <thead><tr><th scope="col">Action</th><th scope="col">Shortcut</th><th scope="col">Notes</th></tr></thead>
+        <tbody>
+          ${Object.entries(SHORTCUT_LABELS).map(([k,l])=>`
+          <tr>
+            <td><strong>${l}</strong></td>
+            <td>
+              <input class="shortcut-input" type="text" readonly
+                value="${esc(sc[k]||'')}"
+                data-key="${k}"
+                aria-label="Shortcut for ${l}. Press keys to change."
+                aria-describedby="sc-note-${k}"
+                onkeydown="captureShortcut(event,'${k}')"
+                onclick="this.select()"
+                title="Click then press a key combination"/>
+              ${conflicts[k]?`<div class="shortcut-conflict" id="sc-conflict-${k}" role="alert" aria-live="assertive">⚠️ Conflict with: ${esc(conflicts[k])}</div>`:''}
+            </td>
+            <td style="font-size:.78rem;color:var(--muted)" id="sc-note-${k}">${SHORTCUT_SR_NOTES[k]||''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function captureShortcut(e, key) {
+  e.preventDefault();
+  e.stopPropagation();
+  if(['Tab','CapsLock','NumLock','ScrollLock'].includes(e.key)) return;
+  const combo = buildCombo(e);
+  if(!combo || ['Alt','Ctrl','Shift','Meta'].includes(combo)) return;
+  const newSc = { ...settings.shortcuts, [key]: combo };
+  settings.shortcuts = newSc;
+  e.target.value = combo;
+  saveSetting('shortcuts', newSc);
+  announce(`Shortcut for ${SHORTCUT_LABELS[key]} set to ${combo}.`);
+  // Recheck conflicts
+  const conflicts = findConflicts(newSc);
+  const conflictEl = document.getElementById(`sc-conflict-${key}`);
+  if(conflicts[key]) {
+    if(conflictEl) conflictEl.textContent = `⚠️ Conflict with: ${conflicts[key]}`;
+    else e.target.insertAdjacentHTML('afterend',`<div class="shortcut-conflict" id="sc-conflict-${key}" role="alert">⚠️ Conflict with: ${conflicts[key]}</div>`);
+  } else if(conflictEl) conflictEl.remove();
+}
+
+function findConflicts(sc) {
+  // Common screen reader shortcuts that are risky to override
+  const SR_RESERVED = {
+    'Insert+F1':'JAWS Help','Insert+Z':'JAWS Toggle Virtual Mode',
+    'Ctrl+Alt+N':'NVDA Next Object','Insert+Space':'NVDA Toggle Browse Mode',
+    'Caps Lock+Space':'VoiceOver Toggle','Alt+F4':'Close Window (Windows)',
+    'F6':'Move Between Panes','Tab':'Next Interactive Element',
+  };
+  const result = {};
+  const vals = Object.entries(sc);
+  vals.forEach(([k,v])=>{
+    if(!v) return;
+    // Check for duplicates within app shortcuts
+    const dupe = vals.find(([k2,v2])=>k2!==k&&v2===v);
+    if(dupe) result[k] = `same as "${SHORTCUT_LABELS[dupe[0]]||dupe[0]}"`;
+    // Check against SR reserved
+    if(SR_RESERVED[v]) result[k] = (result[k]?result[k]+', ':'')+SR_RESERVED[v];
+  });
+  return result;
+}
+
+async function resetShortcuts() {
+  if(IS_ELECTRON) {
+    const sc = await window.electronAPI.resetShortcuts();
+    settings.shortcuts = sc;
+  } else {
+    settings.shortcuts = {newTask:'Alt+N',goToDashboard:'Alt+1',goToTasks:'Alt+2',goToCalendar:'Alt+3',goToTeam:'Alt+4',goToReports:'Alt+5',goToSettings:'Alt+Comma',saveItem:'Alt+S',closeModal:'Escape',searchTasks:'Alt+F',syncDrive:'Alt+R',toggleTheme:'Alt+T',focusNav:'Alt+M',focusMain:'Alt+C'};
+  }
+  showSettingsTab('shortcuts');
+  announce('Shortcuts reset to defaults.');
+  toast('Shortcuts reset to defaults.','success');
+}
+
+function renderSettingsNotifications() {
+  return `
+  <div class="settings-section">
+    <h2 class="settings-section-title">Notifications</h2>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Enable Notifications</div><div class="settings-row-desc">Show desktop notifications for task deadlines and sync events.</div></div>
+      <div class="settings-row-control">${toggle('notifications',settings.notifications)}</div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Overdue Task Alerts</div><div class="settings-row-desc">Notify when a task passes its due date without being completed.</div></div>
+      <div class="settings-row-control">${toggle('notifyOverdue',settings.notifyOverdue!==false)}</div>
+    </div>
+    <div class="settings-row">
+      <div><div class="settings-row-label">Sync Failure Alerts</div><div class="settings-row-desc">Notify when a Google Drive sync attempt fails.</div></div>
+      <div class="settings-row-control">${toggle('notifySyncFail',settings.notifySyncFail!==false)}</div>
+    </div>
+  </div>`;
+}
+
+function renderSettingsAbout() {
+  return `
+  <div class="about-box">
+    <div class="about-logo">AccessPM</div>
+    <div class="about-version">Version 1.0.0 · WCAG 2.2 AA Targeted</div>
+    <div class="about-desc">A fully accessible project management application built for the Blind Institute of Technology. Designed to work seamlessly with JAWS, NVDA, and VoiceOver.</div>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px">
+      <button class="btn btn-secondary" onclick="showShortcutsModal()">Keyboard Shortcuts</button>
+      <button class="btn btn-secondary" onclick="window.open('https://www.w3.org/WAI/WCAG22/quickref/')">WCAG 2.2 Reference</button>
+      <button class="btn btn-secondary" onclick="window.open('https://blindtech.org')">Blind Institute of Technology</button>
+    </div>
+    <div style="margin-top:24px;font-size:.78rem;color:var(--muted)">
+      Built with Electron ${IS_ELECTRON?'(desktop app)':'(web preview)'} ·
+      Google Drive API · WCAG 2.2 Level AA
+      <br>© 2026 Blind Institute of Technology
+    </div>
+  </div>`;
+}
+
+// ── Settings helpers ──────────────────────────────────────────────────────
+function toggle(key, val, extra='') {
+  const id = 'tgl-'+key;
+  return `<label class="toggle" aria-label="${key}">
+    <input type="checkbox" id="${id}" ${val?'checked':''} onchange="saveSetting('${key}',this.checked);${extra}" aria-describedby="${id}-desc"/>
+    <span class="toggle-track" aria-hidden="true"></span>
+    <span class="toggle-thumb" aria-hidden="true"></span>
+  </label>`;
+}
+
+async function saveSetting(key, value) {
+  settings[key] = value;
+  if(IS_ELECTRON) {
+    const updated = await window.electronAPI.saveSettings({[key]:value});
+    Object.assign(settings, updated);
+  }
+}
+
+function bindSettings() {
+  // re-attach toggle thumbs (CSS-only toggles need no JS binding)
+}
+
+// ── Google Drive ──────────────────────────────────────────────────────────
+async function signIn() {
+  announce('Opening Google sign-in in your browser…');
+  toast('Opening Google sign-in…');
+  const res = await window.electronAPI.googleSignIn();
+  if(res.error) { toast('Sign-in error: '+res.error,'error'); return; }
+  settings.googleConnected = true; settings.googleEmail = res.email;
+  await saveSetting('googleEmail', res.email);
+  toast('Signed in as '+res.email,'success');
+  announce('Signed in to Google as '+res.email);
+  showSettingsTab('drive');
+}
+
+async function signOut() {
+  const res = await window.electronAPI.googleSignOut();
+  if(res.success){ settings.googleConnected=false; settings.googleEmail=null; toast('Signed out.','success'); showSettingsTab('drive'); }
+}
+
+async function openFolderPicker() {
+  openModalEl('folder-modal');
+  const wrap = document.getElementById('folder-list-wrap');
+  wrap.innerHTML = '<div style="padding:20px;text-align:center;color:var(--muted)">Loading…</div>';
+  const res = await window.electronAPI.driveListFolders();
+  if(res.error){ wrap.innerHTML=`<div style="padding:20px;color:var(--danger)">${esc(res.error)}</div>`; return; }
+  const folders = res.folders || [];
+  if(!folders.length){ wrap.innerHTML='<div style="padding:20px;color:var(--muted)">No folders found in your Drive.</div>'; return; }
+  wrap.innerHTML = folders.map(f=>`
+    <div class="folder-item" role="option" tabindex="0" data-id="${esc(f.id)}" data-name="${esc(f.name)}"
+      aria-selected="${settings.driveFolderId===f.id?'true':'false'}"
+      onclick="selectFolder('${esc(f.id)}','${esc(f.name)}')"
+      onkeydown="if(event.key==='Enter'||event.key===' ')selectFolder('${esc(f.id)}','${esc(f.name)}')">
+      📁 ${esc(f.name)}
+    </div>`).join('');
+  selectedFolderId = settings.driveFolderId;
+  selectedFolderName = settings.driveFolderName;
+}
+
+function selectFolder(id, name) {
+  selectedFolderId=id; selectedFolderName=name;
+  document.querySelectorAll('.folder-item').forEach(el=>{
+    el.setAttribute('aria-selected', el.dataset.id===id ? 'true':'false');
+  });
+  document.getElementById('folder-ok').disabled = false;
+  announce(`Selected folder: ${name}`);
+}
+
+async function confirmFolder() {
+  await saveSetting('driveFolderId', selectedFolderId);
+  await saveSetting('driveFolderName', selectedFolderName);
+  settings.driveFolderId=selectedFolderId; settings.driveFolderName=selectedFolderName;
+  closeModal('folder-modal');
+  toast('Drive folder set: '+selectedFolderName,'success');
+  showSettingsTab('drive');
+}
+
+async function syncDrive() {
+  if(!IS_ELECTRON) { toast('Drive sync available in the desktop app.'); return; }
+  if(!settings.googleConnected||!settings.driveFolderId) { toast('Configure Google Drive in Settings first.','error'); return; }
+  document.getElementById('sync-status').textContent = 'Syncing…';
+  announce('Syncing with Google Drive…');
+  try {
+    // Read remote first
+    const remote = await window.electronAPI.driveRead();
+    if(remote.data && remote.data.tasks) {
+      // Merge strategy: remote wins for items that exist there
+      const remoteIds = new Set(remote.data.tasks.map(t=>t.id));
+      tasks = [...remote.data.tasks, ...tasks.filter(t=>!remoteIds.has(t.id))];
+      if(remote.data.members) members = remote.data.members;
+    }
+    // Write local state
+    const res = await window.electronAPI.driveWrite({ tasks, members, syncedAt: new Date().toISOString() });
+    if(res.error) throw new Error(res.error);
+    lastSync = new Date().toLocaleTimeString();
+    document.getElementById('sync-status').textContent = `Synced ${lastSync}`;
+    announce('Sync complete.');
+    toast('Synced with Google Drive','success');
+    if(currentView!=='settings') nav(currentView);
+  } catch(e) {
+    document.getElementById('sync-status').textContent = 'Sync failed';
+    toast('Sync failed: '+e.message,'error');
+    announce('Sync failed: '+e.message);
+  }
+}
+
+// ── Shortcuts reference modal ─────────────────────────────────────────────
+function showShortcutsModal() {
+  const sc = settings.shortcuts;
+  document.getElementById('shortcuts-list').innerHTML = `
+    <div class="tbl-wrap"><table aria-label="All keyboard shortcuts">
+      <thead><tr><th scope="col">Action</th><th scope="col">Shortcut</th></tr></thead>
+      <tbody>${Object.entries(SHORTCUT_LABELS).map(([k,l])=>`
+        <tr><td>${l}</td><td><kbd style="background:var(--surface2);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace;font-size:.85rem">${esc(sc[k]||'—')}</kbd></td></tr>`).join('')}
+      </tbody>
+    </table></div>`;
+  openModalEl('shortcuts-modal');
+}
+
+// ── Task modal ────────────────────────────────────────────────────────────
+function openAddTask() {
+  editingTaskId=null;
+  document.getElementById('tm-title').textContent='Add Task';
+  document.getElementById('t-name').value='';
+  document.getElementById('t-desc').value='';
+  document.getElementById('t-priority').value='medium';
+  document.getElementById('t-status').value='todo';
+  document.getElementById('t-due').value='';
+  document.getElementById('t-prog').value=0;
+  document.getElementById('t-prog-val').textContent='0';
+  document.getElementById('t-name-err').classList.add('hidden');
+  document.getElementById('t-due-err').classList.add('hidden');
+  populateAssigneeSelect(members[0]?.name);
+  openModalEl('task-modal');
+}
+
+function openEditTask(id) {
+  const task=tasks.find(t=>t.id===id); if(!task) return;
+  editingTaskId=id;
+  document.getElementById('tm-title').textContent='Edit Task';
+  document.getElementById('t-name').value=task.name;
+  document.getElementById('t-desc').value=task.desc||'';
+  document.getElementById('t-priority').value=task.priority;
+  document.getElementById('t-status').value=task.status;
+  document.getElementById('t-due').value=task.due;
+  document.getElementById('t-prog').value=task.progress;
+  document.getElementById('t-prog-val').textContent=task.progress;
+  document.getElementById('t-name-err').classList.add('hidden');
+  document.getElementById('t-due-err').classList.add('hidden');
+  populateAssigneeSelect(task.assignee);
+  openModalEl('task-modal');
+}
+
+function populateAssigneeSelect(sel) {
+  document.getElementById('t-assignee').innerHTML=members.map(m=>`<option value="${esc(m.name)}" ${m.name===sel?'selected':''}>${esc(m.name)}</option>`).join('');
+}
+
+function saveTask() {
+  const name=document.getElementById('t-name').value.trim(), due=document.getElementById('t-due').value;
+  let ok=true;
+  if(!name){document.getElementById('t-name-err').classList.remove('hidden');ok=false;}
+  else document.getElementById('t-name-err').classList.add('hidden');
+  if(!due){document.getElementById('t-due-err').classList.remove('hidden');ok=false;}
+  else document.getElementById('t-due-err').classList.add('hidden');
+  if(!ok){announce('Please fix form errors.');return;}
+  const task={name,desc:document.getElementById('t-desc').value.trim(),assignee:document.getElementById('t-assignee').value,priority:document.getElementById('t-priority').value,status:document.getElementById('t-status').value,due,progress:parseInt(document.getElementById('t-prog').value)};
+  if(editingTaskId){const i=tasks.findIndex(t=>t.id===editingTaskId);tasks[i]={...tasks[i],...task};}
+  else tasks.push({id:nextTaskId++,...task});
+  closeModal('task-modal');
+  if(currentView!=='settings') nav(currentView);
+  announce('Task saved.');
+  toast('Task saved.','success');
+  if(settings.autoSync&&settings.googleConnected&&settings.driveFolderId) syncDrive();
+}
+
+// ── Member modal ──────────────────────────────────────────────────────────
+function openAddMember(){openModalEl('member-modal');}
+function saveMember(){
+  const name=document.getElementById('m-name').value.trim(),email=document.getElementById('m-email').value.trim(),role=document.getElementById('m-role').value.trim();
+  if(!name||!email||!role){announce('Fill all required fields.');return;}
+  members.push({id:nextMemberId++,name,email,role,dept:document.getElementById('m-dept').value.trim(),photo:document.getElementById('m-photo').value.trim()});
+  closeModal('member-modal');nav('team');announce('Member added.');toast('Team member added.','success');
+}
+
+// ── Delete ────────────────────────────────────────────────────────────────
+function confirmDelete(type, id, name) {
+  if(!settings.confirmOnDelete) { doDelete(type,id); return; }
+  document.getElementById('cf-title').textContent = 'Delete '+(type==='task'?'Task':'Member');
+  document.getElementById('cf-desc').textContent = `Delete "${name}"? This cannot be undone.`;
+  document.getElementById('cf-ok').onclick = () => { doDelete(type,id); closeModal('confirm-modal'); };
+  openModalEl('confirm-modal');
+}
+function doDelete(type,id){
+  if(type==='task'){tasks=tasks.filter(t=>t.id!==id);announce('Task deleted.');}
+  else{members=members.filter(m=>m.id!==id);announce('Member removed.');}
+  if(currentView!=='settings') nav(currentView);
+  toast(type==='task'?'Task deleted.':'Member removed.');
+}
+
+// ── Modal management ──────────────────────────────────────────────────────
+let modalStack=[], modalFocusReturn=null;
+
+function openModalEl(id){
+  modalFocusReturn=document.activeElement;
+  const el=document.getElementById(id);
+  el.removeAttribute('hidden');
+  modalStack.push(id);
+  const first=el.querySelector('input,select,textarea,button,[tabindex]');
+  if(first) requestAnimationFrame(()=>first.focus());
+  el.addEventListener('keydown',trapFocus);
+}
+
+function closeModal(id){
+  const el=document.getElementById(id);
+  el.setAttribute('hidden','');
+  el.removeEventListener('keydown',trapFocus);
+  modalStack=modalStack.filter(m=>m!==id);
+  if(modalFocusReturn) modalFocusReturn.focus();
+}
+
+function closeTopModal(){
+  if(modalStack.length) closeModal(modalStack[modalStack.length-1]);
+}
+
+function trapFocus(e){
+  if(e.key!=='Tab') return;
+  const modal=e.currentTarget.querySelector('.modal');
+  if(!modal) return;
+  const els=[...modal.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled&&el.offsetParent!==null);
+  if(!els.length) return;
+  const first=els[0],last=els[els.length-1];
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}
+  else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
+}
+
+// ── Theme toggle ──────────────────────────────────────────────────────────
+function toggleTheme(){
+  settings.theme = settings.theme==='dark'?'light':'dark';
+  applyTheme();
+  saveSetting('theme',settings.theme);
+  announce(settings.theme==='dark'?'Dark mode enabled.':'Light mode enabled.');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────
+let toastTimer=null;
+function toast(msg, type=''){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.className='show'+(type?' '+type:'');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>{el.className='';},3200);
+}
+
+function announce(msg){
+  const r=document.getElementById('live');
+  r.textContent=''; requestAnimationFrame(()=>{r.textContent=msg;});
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function initials(n){return String(n||'').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+function fmtDate(d){if(!d) return '—';return new Date(d+'T00:00').toLocaleDateString(settings.language||'en',{month:'short',day:'numeric',year:'numeric'});}
+function sBadge(s){const m={todo:'badge-todo To Do',inprogress:'badge-ip In Progress',done:'badge-done Done'};const[cls,lbl]=(m[s]||'badge-low '+s).split(' ');return `<span class="badge ${cls}">${lbl||s}</span>`;}
+function pBadge(p){const m={high:'badge-high High',medium:'badge-medium Medium',low:'badge-low Low'};const[cls,lbl]=(m[p]||'badge-low '+p).split(' ');return `<span class="badge ${cls}">${lbl||p}</span>`;}
+
+// ── Boot ──────────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
