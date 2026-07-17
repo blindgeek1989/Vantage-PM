@@ -1,5 +1,42 @@
 # What's New in VantagePM
 
+## v9.1.0 — Undo, Batch Time Log, WCAG Print Report, Preset Shortcuts, Search Enhancements
+
+### Undo for Destructive Actions
+Deleting a task, project, milestone, or team member now shows an **Undo** button in the toast notification. Press it within 5 seconds to restore everything exactly as it was (including related tasks when a project is deleted). Bulk delete also supports undo. The undo button is keyboard focusable and announced to screen readers with "Activate to undo last deletion."
+
+### Batch Time Log
+A new **Log Time** button on the Reports page opens a dialog listing all open tasks for a selected person and date. Enter hours (and an optional note) for each task in one go — no need to open individual tasks. Hours are rounded up to the nearest 15 minutes (billing style), matching the existing timer. The date field defaults to today; changing the Person dropdown refreshes the task list live.
+
+### WCAG Audit Print Report
+The Audit page now has a **Print Report** button alongside Export CSV. It opens a clean, print-ready HTML document in a new window showing:
+- Pass rate percentage and summary counts (Pass, Fail, Review, N/A, Not Set)
+- Full criteria table with colour-coded result badges and your notes
+- A "Print / Save as PDF" button styled for the printed page
+
+Uses `window.open` + `document.write` — no server or library required. Works with any browser's built-in PDF printer.
+
+### Alt+1–9 Keyboard Shortcuts for Filter Presets
+Each saved filter preset now has a keyboard shortcut: **Alt+1** loads the first preset, **Alt+2** the second, and so on up to **Alt+9**. The shortcut label is displayed in small text on each preset chip so sighted users can see it at a glance. Screen reader users hear the shortcut in the button's accessible name.
+
+### Escape Now Closes Row Action Menus
+Pressing Escape while a row action menu (⋮ Actions) is open closes it and returns focus to the trigger button. Previously Escape only closed modals; row menus required a mouse click outside to dismiss.
+
+### Expanded Search
+- **Task filter search** (Tasks view) now matches against task description and comment text in addition to task name and assignee.
+- **Global search** (Alt+/) now includes project notes in results. Matching notes show the note excerpt and the project name, and activating the result opens the project's notes panel.
+- **Global search** also now matches member department and email, and project description text.
+
+### Time Summary Fixed
+The time tracking summary section was being generated but discarded in Reports due to a JS expression precedence bug. It now correctly appears at the bottom of the Reports page.
+
+### Architecture: JS Split to renderer.js
+All JavaScript has been extracted from `index.html` into a dedicated `src/renderer/renderer.js` file. `index.html` now contains only HTML structure and CSS. This makes both files independently editable — a bad JS change can no longer corrupt the HTML, and vice versa.
+
+`audit.py` has been updated to read `renderer.js` for all JS checks (brace balance, duplicates, key functions, etc.) while still validating `index.html` structure and CSP.
+
+---
+
 ## v9.0.0 — Persona Setup, Filter Presets, Task Pinning, CSV Import
 
 ### Persona Setup Wizard

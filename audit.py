@@ -3,16 +3,16 @@ from collections import Counter
 
 with open('src/renderer/index.html', encoding='utf-8') as f:
     content = f.read()
+with open('src/renderer/renderer.js', encoding='utf-8') as f:
+    js = f.read()
 
-script_start = content.find('<script>')
-script_end   = content.rfind('</script>')
+script_tag   = content.find('<script src="renderer.js">')
+script_close = content.find('</script>', script_tag)
 body_close   = content.rfind('</body>')
 html_close   = content.rfind('</html>')
-init_idx     = content.rfind('init();')
-js = content[script_start+8:script_end]
+init_idx     = js.rfind('init();')
 
-sl = lambda idx: content[:idx].count('\n') + 1
-order_ok = sl(script_start) < sl(init_idx) < sl(script_end) < sl(body_close) < sl(html_close)
+order_ok = script_tag < script_close < body_close < html_close and init_idx != -1
 ob = js.count('{'); cb = js.count('}')
 bt = js.count('`')
 funcs = re.findall(r'function (\w+)\s*\(', js)
@@ -30,7 +30,7 @@ checks = {
     'Backticks even'  : bt % 2 == 0,
     'No duplicates'   : not dupes,
     'No confirm()'    : confirms == 0,
-    'One init() call' : content.count('init();') == 1,
+    'One init() call' : js.count('init();') == 1,
     'Key functions'   : not missing,
     'CSP allows JS'   : csp_ok,
 }

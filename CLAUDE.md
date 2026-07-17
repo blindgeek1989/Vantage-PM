@@ -23,14 +23,15 @@ C:\a11y project\accesspm\
 │   ├── main.js          — Electron main process, IPC, Google OAuth2, Drive sync
 │   ├── preload.js       — contextBridge whitelist
 │   └── renderer\
-│       └── index.html   — entire app UI: HTML, CSS, and JS in one file
+│       ├── index.html   — app shell: HTML structure and CSS only
+│       └── renderer.js  — all app JavaScript (loaded via <script src="renderer.js">)
 ├── assets\              — icon.ico, icon.icns, icon.png
 ├── package.json         — electron-builder config, productName: VantagePM
 ├── audit.py             — pre-build audit script (see below)
 └── CLAUDE.md            — this file
 ```
 
-All app logic lives in `src/renderer/index.html`. There is no bundler or framework.
+HTML and CSS live in `index.html`. All JavaScript lives in `renderer.js`. There is no bundler or framework.
 
 ## Pre-Build Audit
 
@@ -49,16 +50,16 @@ from collections import Counter
 
 with open('src/renderer/index.html', encoding='utf-8') as f:
     content = f.read()
+with open('src/renderer/renderer.js', encoding='utf-8') as f:
+    js = f.read()
 
-script_start = content.find('<script>')
-script_end   = content.rfind('</script>')
+script_tag   = content.find('<script src="renderer.js">')
+script_close = content.find('</script>', script_tag)
 body_close   = content.rfind('</body>')
 html_close   = content.rfind('</html>')
-init_idx     = content.rfind('init();')
-js = content[script_start+8:script_end]
+init_idx     = js.rfind('init();')
 
-sl = lambda idx: content[:idx].count('\n') + 1
-order_ok = sl(script_start) < sl(init_idx) < sl(script_end) < sl(body_close) < sl(html_close)
+order_ok = script_tag < script_close < body_close < html_close and init_idx != -1
 ob = js.count('{'); cb = js.count('}')
 bt = js.count('`')
 funcs = re.findall(r'function (\w+)\s*\(', js)
@@ -76,7 +77,7 @@ checks = {
     'Backticks even'  : bt % 2 == 0,
     'No duplicates'   : not dupes,
     'No confirm()'    : confirms == 0,
-    'One init() call' : content.count('init();') == 1,
+    'One init() call' : js.count('init();') == 1,
     'Key functions'   : not missing,
     'CSP allows JS'   : csp_ok,
 }
@@ -95,12 +96,13 @@ print(f"\nVERDICT: {'PASS - safe to build' if all_ok else 'FAIL - fix before bui
 ## Critical Code Rules
 
 ### Structure
-- index.html must have exactly one script block
-- The script block must open after all HTML modals and close before </body>
-- init() must be called once, as the very last statement inside the script block
-- Order at end of file: </script> then </body> then </html>
+- index.html must have exactly one `<script src="renderer.js">` tag
+- That script tag must appear after all HTML modals and close before `</body>`
+- All JavaScript lives in `renderer.js` — never add inline `<script>` blocks to index.html
+- `init()` must be called once, as the very last statement in renderer.js
+- Order at end of index.html: `</script>` then `</body>` then `</html>`
 
-### JavaScript
+### JavaScript (renderer.js)
 - Zero duplicate functions — never define the same function name twice
 - Zero native confirm() calls — always use the confirm-modal alertdialog
 - Zero stale aliases — never leave const _foo_v6 = foo patterns in the file
@@ -141,13 +143,15 @@ print(f"\nVERDICT: {'PASS - safe to build' if all_ok else 'FAIL - fix before bui
 | v7.0.0  | Project health dashboard, time summary, task aging alerts, workload balancing, team notes, SR conflict detector, session summary |
 | v7.4    | Script block moved to before </body> — confirmed working build |
 | v8.0.0  | Role-based views, priority escalation, time goals per project, end of day checklist, velocity tracking |
+| v9.1    | Undo for deletes, batch time log, WCAG print report, Alt+1-9 preset shortcuts, Escape closes row menus, global search includes notes, JS split to renderer.js |
+| v9.0.0  | Persona setup wizard, filter presets, task pinning, CSV import, team table redesign |
 | v8.1    | Add Task button fixed (stale alias removed), all decorative emoji hidden from screen readers |
 
 ## Common Error Meanings
 
 | Error in electron.txt | Cause | Fix |
 |-----------------------|-------|-----|
-| Unexpected token < | HTML tag inside the JS script block | Move the HTML outside </script> |
+| Unexpected token < | HTML tag inside renderer.js | Move the HTML to index.html |
 | nav is not defined | init() failed — script block broken | Check script block structure and order |
 | _foo is not defined | Stale alias left in code | Remove the const _foo = foo line |
 | Build produces wrong version | Old package.json still in place | Re-copy package.json from the zip |
