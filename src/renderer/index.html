@@ -470,7 +470,7 @@ tr:hover td{background:var(--surface2)}
     <div id="tab-details" role="tabpanel" aria-labelledby="tbtn-details">
       <div class="form-group"><label class="form-label" for="t-name">Task name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="t-name" type="text" autocomplete="off" aria-required="true" aria-describedby="t-name-err" oninput="suggestPriority()"/><span class="form-error hidden" id="t-name-err" role="alert">Please enter a task name.</span></div>
       <div class="grid-2">
-        <div class="form-group"><label class="form-label" for="t-project">Project</label><select class="form-select" id="t-project"><option value="">— No project —</option></select></div>
+        <div class="form-group"><label class="form-label" for="t-project">Project</label><div style="display:flex;gap:8px;align-items:center"><select class="form-select" id="t-project" style="flex:1"><option value="">— No project —</option></select><button type="button" class="btn btn-secondary btn-sm" onclick="openAddProjectFromTask()" aria-label="Create a new project" aria-haspopup="dialog">＋ New</button></div></div>
         <div class="form-group"><label class="form-label" for="t-color">Color Label</label><select class="form-select" id="t-color"><option value="">None</option><option value="#E53935">Red</option><option value="#FB8C00">Orange</option><option value="#FDD835">Yellow</option><option value="#43A047">Green</option><option value="#1E88E5">Blue</option><option value="#8E24AA">Purple</option></select></div>
       </div>
       <div class="form-group"><label class="form-label" for="t-desc">Description</label><textarea class="form-textarea" id="t-desc"></textarea></div>
