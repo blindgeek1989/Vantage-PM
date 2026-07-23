@@ -152,7 +152,7 @@ function nav(view,btn,settingsTab){
   currentView=view;
   document.querySelectorAll('.nav-btn').forEach(b=>b.removeAttribute('aria-current'));
   const target=btn||document.querySelector(`[data-view=${view}]`);if(target)target.setAttribute('aria-current','page');
-  const titles={dashboard:'Dashboard',tasks:'Tasks',projects:'Projects',milestones:'Milestones',health:'Project Health',templates:'Task Templates',calendar:'Calendar',team:'Team',reports:'Reports',audit:'WCAG 2.2 Audit',activity:'Activity Log',onboarding:'Onboarding',settings:'Settings'};
+  const titles={dashboard:'Dashboard',tasks:'Tasks',projects:'Projects',milestones:'Milestones',health:'Project Health',templates:'Task Templates',calendar:'Calendar',team:'Team',reports:'Reports',audit:'WCAG 2.2 Audit',activity:'Activity Log',onboarding:'Onboarding',settings:'Settings','whats-new':"What's New"};
   const title=titles[view]||view;
   document.getElementById('page-title').textContent=title;
   document.getElementById('breadcrumb-current').textContent=title;
@@ -161,7 +161,7 @@ function nav(view,btn,settingsTab){
   else if(view==='projects'){pb.textContent='＋ Add Project';pb.onclick=openAddProject;pb.style.display='';}
   else if(view==='milestones'){pb.textContent='＋ Add Milestone';pb.onclick=openAddMilestone;pb.style.display='';}
   else if(view==='templates'){pb.textContent='＋ Add Template';pb.onclick=openAddTemplate;pb.style.display='';}
-  else if(['settings','activity','reports','audit','onboarding','health'].includes(view)){pb.style.display='none';}
+  else if(['settings','activity','reports','audit','onboarding','health','whats-new'].includes(view)){pb.style.display='none';}
   else{pb.textContent='＋ Add Task';pb.onclick=openAddTask;pb.style.display='';}
   if(view!=='settings'){settingsHasChanges=false;pendingSettings={};}
   const root=document.getElementById('main-content');
@@ -178,6 +178,7 @@ function nav(view,btn,settingsTab){
   else if(view==='activity')root.innerHTML=renderActivity();
   else if(view==='onboarding')root.innerHTML=renderOnboarding();
   else if(view==='settings'){root.innerHTML=renderSettings();if(settingsTab)showSettingsTab(settingsTab);}
+  else if(view==='whats-new')root.innerHTML=renderWhatsNew();
   root.focus();announce(`Navigated to ${title}.`);
 }
 function renderDashboard(){const _setupNotice=settings.focusModeUser?'':`<div class="card" role="note" style="margin-bottom:16px;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))"><strong style="display:block;margin-bottom:6px"><span aria-hidden="true">👤</span> Complete your setup</strong><p style="font-size:.86rem;margin-bottom:8px">Enter your name in <strong>Settings → General</strong> as the Focus Mode User to personalize your Daily Briefing and Focus Mode.</p><button class="btn btn-primary btn-sm" onclick="nav('settings',null,'general')">Open Settings</button></div>`;let myT=focusMode?tasks.filter(t=>t.assignee===(settings.focusModeUser||members[0]?.name)):tasks;const total=myT.length,done=myT.filter(t=>t.status==='done').length,todo=myT.filter(t=>t.status==='todo').length,ip=myT.filter(t=>t.status==='inprogress').length,overdue=myT.filter(t=>t.status!=='done'&&new Date(t.due+'T00:00')<today).length,avg=total?Math.round(myT.reduce((a,t)=>a+t.progress,0)/total):0;const ts=today.toISOString().split('T')[0];const todayTasks=myT.filter(t=>t.due===ts&&t.status!=='done');const upMs=milestones.filter(m=>{const d=new Date(m.date+'T00:00');return d>=today&&d<=new Date(today.getTime()+14*86400000);}).sort((a,b)=>new Date(a.date)-new Date(b.date));return`${_setupNotice}<div class="today-widget" role="region" aria-label="Tasks due today"><h2 style="font-size:.9rem;font-weight:700;color:var(--accent);margin-bottom:10px"><span aria-hidden="true">📅</span> Due Today — ${today.toLocaleDateString(settings.language,{weekday:'long',month:'long',day:'numeric'})}</h2>${todayTasks.length===0?'<p style="font-size:.85rem;color:var(--muted)">Nothing due today.</p>':`<ul style="list-style:none;padding:0;margin:0">${todayTasks.map(t=>`<li class="today-task-item">${sBadge(t.status)}<span style="flex:1;font-weight:600">${esc(t.name)}</span><button class="btn btn-success btn-sm" onclick="markDone(${t.id})" aria-label="Mark ${esc(t.name)} done">Done</button><button class="btn btn-secondary btn-sm" onclick="openEditTask(${t.id})" aria-label="Edit ${esc(t.name)}">Edit</button></li>`).join('')}</ul>`}</div>${upMs.length?`<div class="card mt-16" role="region" aria-label="Upcoming milestones"><h2 class="section-h"><span aria-hidden="true">🏁</span> Upcoming Milestones</h2><ul style="list-style:none;padding:0">${upMs.map(m=>{const proj=projects.find(p=>p.id===m.projectId);return`<li class="milestone-item"><span aria-hidden="true">🏁</span><span style="flex:1;font-weight:600">${esc(m.name)}</span>${proj?`<span class="project-chip" style="color:${proj.color};border-color:${proj.color}">${esc(proj.name)}</span>`:''}<span style="font-size:.82rem;color:var(--muted)">${fmtDate(m.date)}</span></li>`;}).join('')}</ul></div>`:''}<section aria-label="Summary" class="mt-16"><div class="stat-grid" role="list">${[['Total',total,'var(--accent)'],['To Do',todo,'var(--warn)'],['In Progress',ip,'var(--accent)'],['Done',done,'var(--success)'],['Overdue',overdue,'var(--danger)'],['Avg Progress',avg+'%','var(--accent)']].map(([l,v,c])=>`<div class="card stat-card" role="listitem"><div class="stat-num" style="color:${c}">${v}</div><div class="stat-lbl">${l}</div></div>`).join('')}</div></section><section class="mt-16" aria-label="Recent tasks"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><h2 class="section-h" style="margin-bottom:0;border:none">Recent Tasks</h2><button class="btn btn-secondary btn-sm" onclick="exportCSV()"><span aria-hidden="true">📥</span> Export CSV</button></div><div class="tbl-wrap"><table aria-label="Recent tasks"><thead><tr><th scope="col">Task</th><th scope="col">Assignee</th><th scope="col">Status</th><th scope="col">Due</th></tr></thead><tbody>${[...myT].sort((a,b)=>new Date(b.due)-new Date(a.due)).slice(0,5).map(t=>`<tr><td><span style="display:inline-flex;align-items:center;gap:6px">${t.colorLabel?`<span class="color-dot" style="background:${t.colorLabel}" aria-hidden="true"></span>`:''}<strong>${esc(t.name)}</strong></span></td><td>${esc(t.assignee)}</td><td>${sBadge(t.status)}</td><td>${fmtDate(t.due)}</td></tr>`).join('')}</tbody></table></div></section>`;}
@@ -268,6 +269,81 @@ function logActivity(text,icon='📋',sessionType='update'){
   if(activityLog.length>500)activityLog=activityLog.slice(-500);
   sessionLog.push({type:sessionType,text,timestamp:entry.timestamp});
   scheduleLocalSave();
+}
+
+function renderWhatsNew(){
+  return `<div role="region" aria-label="What's New in VantagePM">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+    <h2 style="font-size:1.15rem;font-weight:800;margin:0">What's New in VantagePM</h2>
+    <span class="badge badge-done">v9.3.0 current</span>
+  </div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:24px">Latest features and fixes, most recent first.</p>
+
+  <section class="card" style="margin-bottom:16px">
+    <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.3.0</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">July 2026</span></div>
+    <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem">
+      <li><strong>Calendar day navigation</strong> — Clicking or pressing Enter/Space on a calendar day navigates to the Tasks view filtered to tasks due on that date. Days with no tasks announce "No tasks due" to screen readers.</li>
+      <li><strong>WCAG audit: bulk-mark unset</strong> — New "Mark unset as…" dropdown with Apply to Unset button bulk-marks all criteria with no status in one action (Pass / Fail / Review / N/A). Count announced to screen readers.</li>
+      <li><strong>＋ New Project inside task modal</strong> — Opens Add Project without leaving the task form. On save, the new project is selected automatically and the task modal stays open.</li>
+      <li><strong>Template name pre-fill</strong> — Loading a template no longer appends "(copy)." The name pre-fills as-is for immediate editing.</li>
+      <li><strong>Session summary: opt-in read-aloud</strong> — Auto-read-aloud removed from session summary open. TTS now only fires when you press Read Aloud explicitly, preventing conflict with JAWS and NVDA.</li>
+      <li><strong>JAWS virtual cursor fix</strong> — Added role="application" to the app container. JAWS now enters application mode automatically on focus entry; no more Insert+Z required to navigate the app.</li>
+    </ul>
+  </section>
+
+  <section class="card" style="margin-bottom:16px">
+    <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.2.0</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">July 2026</span></div>
+    <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem">
+      <li><strong>Tester persona sees Quick Setup</strong> — Accessibility Tester persona now has access to the Quick Setup section on the Onboarding page.</li>
+      <li><strong>Role-change warning</strong> — Switching away from the Tester role shows an alertdialog explaining the workspace will be replaced, with Cancel and Change Role options.</li>
+      <li><strong>Done button on Due Today widget</strong> — Every task in the Dashboard Due Today list now has a Done button. Recurring tasks schedule their next recurrence automatically.</li>
+      <li><strong>Mark 100% button</strong> — One-click button beside the progress slider in the task modal reaches 100 percent instantly.</li>
+      <li><strong>Author pre-fill</strong> — Comment author and time-log person fields pre-fill with the Focus Mode User name when opening Add Task or Edit Task.</li>
+      <li><strong>Log Time in Tasks view</strong> — Log Time button added to the Tasks filter bar; batch time logging is no longer only reachable from Reports.</li>
+    </ul>
+  </section>
+
+  <section class="card" style="margin-bottom:16px">
+    <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.1.0</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">July 2026</span></div>
+    <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem">
+      <li><strong>Undo for deletes</strong> — Deleting a task, project, milestone, member, or bulk selection shows an Undo button in the toast for 5 seconds. Related tasks are also restored when a project is undone.</li>
+      <li><strong>Batch time log</strong> — Log Time on the Reports page opens a dialog listing all open tasks for a selected person and date. Enter hours for multiple tasks at once; hours round up to the nearest 15 minutes.</li>
+      <li><strong>WCAG audit print report</strong> — Print Report on the Audit page opens a formatted, print-ready document with pass rate, summary counts, full criteria table, and colour-coded badges. Save as PDF via the browser print dialog.</li>
+      <li><strong>Alt+1–9 filter preset shortcuts</strong> — Each saved preset has a keyboard shortcut shown on its chip and in its accessible name.</li>
+      <li><strong>Escape closes row menus</strong> — Pressing Escape while a task-row Actions menu is open closes it and returns focus to the trigger button.</li>
+      <li><strong>Expanded search</strong> — Task filter search matches description and comment text. Global search (Alt+/) now includes project notes, member department, member email, and project description.</li>
+      <li><strong>JavaScript extracted to renderer.js</strong> — All JS moved out of index.html into a separate renderer.js file. index.html contains only HTML and CSS.</li>
+    </ul>
+  </section>
+
+  <section class="card" style="margin-bottom:16px">
+    <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.0.0</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">July 2026</span></div>
+    <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem">
+      <li><strong>Persona setup wizard</strong> — First-run modal walks through role selection (Accessibility Tester, Project Lead, Project Manager, Blank Slate) and name entry, seeding role-appropriate sample data.</li>
+      <li><strong>Filter presets</strong> — Save named status+priority+project+search combinations. Preset bar renders above the task table with aria-pressed state for screen readers.</li>
+      <li><strong>Task pinning</strong> — Pin any task to keep it at the top of the list regardless of sort order. Pin state is announced via aria-live; aria-pressed reflects it for JAWS and NVDA.</li>
+      <li><strong>CSV import</strong> — Import tasks from any CSV. Supports name, project, assignee, priority, status, due, progress, and recurring columns. Missing projects and members are created automatically.</li>
+      <li><strong>Team table redesign</strong> — Team view redesigned as a sortable table with scope="col" headers. Project Leads and Managers can change team member roles via a Change Role modal (role="dialog", aria-modal, focus trap).</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h3 class="section-h">Previous Versions</h3>
+    <div class="tbl-wrap">
+      <table aria-label="Previous version summary">
+        <thead><tr><th scope="col">Version</th><th scope="col">Key changes</th></tr></thead>
+        <tbody>
+          <tr><td><strong>v8.1</strong></td><td>Add Task button fixed (stale alias removed); all decorative emoji hidden from screen readers</td></tr>
+          <tr><td><strong>v8.0.0</strong></td><td>Role-based views, priority escalation, time goals per project, end-of-day checklist, velocity tracking</td></tr>
+          <tr><td><strong>v7.4</strong></td><td>Script block moved before &lt;/body&gt; — confirmed working build</td></tr>
+          <tr><td><strong>v7.0.0</strong></td><td>Project health dashboard, time summary, task aging alerts, workload balancing, team notes, screen reader conflict detector, session summary</td></tr>
+          <tr><td><strong>v6.0.0</strong></td><td>Task timer with 15-min billing rounding, quick capture, natural language due dates</td></tr>
+          <tr><td><strong>v5.0.0</strong></td><td>Settings Save/Cancel, task templates, custom statuses, bulk actions, color labels, onboarding wizard</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>`;
 }
 
 function renderOnboarding(){
