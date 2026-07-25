@@ -384,7 +384,7 @@ tr:hover td{background:var(--surface2)}
     <button class="btn btn-secondary btn-sm" onclick="stopTimer(false)" aria-label="Discard timer without logging">Discard</button>
   </div>
 </div>
-<div id="app" role="document">
+<div id="app">
   <aside id="sidebar" aria-label="Sidebar">
     <div class="sb-header">
       <div aria-label="VantagePM" role="img">
@@ -452,7 +452,7 @@ tr:hover td{background:var(--surface2)}
       <span class="breadcrumb-sep" aria-hidden="true">›</span>
       <span class="breadcrumb-current" id="breadcrumb-current" aria-current="page">Dashboard</span>
     </nav>
-    <div class="content" id="main-content" tabindex="-1" aria-labelledby="page-title"></div>
+    <div class="content" id="main-content" tabindex="-1" aria-labelledby="page-title" aria-live="polite" aria-atomic="false"></div>
   </div>
 </div>
 
