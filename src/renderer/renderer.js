@@ -96,7 +96,7 @@ async function init(){
   } else { applyTheme(); }
   nav('dashboard',document.querySelector('[data-view=dashboard]'));
   if(!settings.hasSeenOnboarding||!settings.focusModeUser) openSetupModal();
-  document.addEventListener('keydown',handleKey,{capture:true});
+  document.addEventListener('keydown',handleKey);
   document.addEventListener('click',closeAllRowMenus);
 }
 function applySettings(s){Object.assign(settings,s);applyTheme();document.documentElement.lang=settings.language;document.documentElement.style.setProperty('--fs',settings.fontSize+'px');if(settings.reduceMotion)document.documentElement.setAttribute('data-reduce-motion','');else document.documentElement.removeAttribute('data-reduce-motion');if(settings.highContrast)document.documentElement.setAttribute('data-contrast','');else document.documentElement.removeAttribute('data-contrast');}
