@@ -42,15 +42,15 @@ function ok(name, condition, detail = '') {
 // ---------------------------------------------------------------------------
 const app = document.getElementById('app');
 ok(
-  '#app does not have role="application"',
-  app && app.getAttribute('role') !== 'application',
+  '#app has no role (plain container — no role="application" or role="document")',
+  app && !app.getAttribute('role'),
   app ? `#app has role="${app.getAttribute('role')}"` : '#app not found'
 );
 
 const mainContent = document.getElementById('main-content');
 ok(
-  '#main-content has aria-live="polite" (JAWS virtual buffer refresh)',
-  mainContent && mainContent.getAttribute('aria-live') === 'polite',
+  '#main-content is not a live region (must be navigable document content, not announcement target)',
+  mainContent && !mainContent.getAttribute('aria-live'),
   mainContent ? `aria-live="${mainContent.getAttribute('aria-live')}"` : '#main-content not found'
 );
 
