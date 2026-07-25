@@ -1460,8 +1460,8 @@ function doSetupPersona(type){
   const labels={tester:'Accessibility Tester',lead:'Project Lead',manager:'Project Manager',blank:'Blank Slate'};
   logActivity(`Set up as ${labels[type]||type}`,'🚀');
   nav('dashboard',document.querySelector('[data-view=dashboard]'));
-  announce(`Welcome to VantagePM. Set up as ${labels[type]||type}.`);
-  toast(`Set up as ${labels[type]||type}.`,'success');
+  announce('Welcome to VantagePM.');
+  toast('Welcome to VantagePM.','success');
 }
 
 init();
