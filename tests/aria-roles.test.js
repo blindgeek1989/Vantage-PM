@@ -48,8 +48,8 @@ ok(
 );
 
 ok(
-  '#app does not have role="document"',
-  app && app.getAttribute('role') !== 'document',
+  '#app has role="document" (required for JAWS virtual cursor)',
+  app && app.getAttribute('role') === 'document',
   app ? `#app has role="${app.getAttribute('role')}"` : '#app not found'
 );
 
