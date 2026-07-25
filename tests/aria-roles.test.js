@@ -47,10 +47,11 @@ ok(
   app ? `#app has role="${app.getAttribute('role')}"` : '#app not found'
 );
 
+const mainContent = document.getElementById('main-content');
 ok(
-  '#app has role="document" (required for JAWS virtual cursor)',
-  app && app.getAttribute('role') === 'document',
-  app ? `#app has role="${app.getAttribute('role')}"` : '#app not found'
+  '#main-content has aria-live="polite" (JAWS virtual buffer refresh)',
+  mainContent && mainContent.getAttribute('aria-live') === 'polite',
+  mainContent ? `aria-live="${mainContent.getAttribute('aria-live')}"` : '#main-content not found'
 );
 
 // ---------------------------------------------------------------------------
