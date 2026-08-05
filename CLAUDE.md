@@ -143,6 +143,9 @@ print(f"\nVERDICT: {'PASS - safe to build' if all_ok else 'FAIL - fix before bui
 | v7.0.0  | Project health dashboard, time summary, task aging alerts, workload balancing, team notes, SR conflict detector, session summary |
 | v7.4    | Script block moved to before </body> — confirmed working build |
 | v8.0.0  | Role-based views, priority escalation, time goals per project, end of day checklist, velocity tracking |
+| v9.4.0  | Two-mode welcome wizard (Digital Accessibility / Project Management), PM mode hides WCAG audit, JAWS virtual cursor fix (role=document on main content), settings persistence fix |
+| v9.3.0  | Calendar day navigation, WCAG bulk-mark unset, New Project inside task modal, template name pre-fill, session summary opt-in TTS, screen reader navigation fix |
+| v9.2.0  | Tester persona Quick Setup on Onboarding, role-change warning dialog, Done button on Due Today widget, Mark 100% button, author pre-fill, Log Time in Tasks view |
 | v9.1    | Undo for deletes, batch time log, WCAG print report, Alt+1-9 preset shortcuts, Escape closes row menus, global search includes notes, JS split to renderer.js |
 | v9.0.0  | Persona setup wizard, filter presets, task pinning, CSV import, team table redesign |
 | v8.1    | Add Task button fixed (stale alias removed), all decorative emoji hidden from screen readers |

@@ -53,6 +53,11 @@ ok(
   mainContent && !mainContent.getAttribute('aria-live'),
   mainContent ? `aria-live="${mainContent.getAttribute('aria-live')}"` : '#main-content not found'
 );
+ok(
+  '#main-content has role="document" (enables JAWS virtual cursor Browse Mode)',
+  mainContent && mainContent.getAttribute('role') === 'document',
+  mainContent ? `role="${mainContent.getAttribute('role')}"` : '#main-content not found'
+);
 
 // ---------------------------------------------------------------------------
 // 2. Landmark structure
@@ -113,7 +118,10 @@ ok(
 );
 
 // ---------------------------------------------------------------------------
-// 4. Dialogs: role="dialog" must have aria-modal and aria-labelledby
+// 4. Dialogs: role="dialog" must have aria-labelledby; must NOT use aria-modal
+//    (aria-modal causes JAWS+Electron to build a restricted virtual buffer
+//     containing only the labelledby/describedby text, omitting all child
+//     controls. Background suppression is handled by inert on #app instead.)
 // ---------------------------------------------------------------------------
 const dialogs = Array.from(document.querySelectorAll('[role="dialog"]'));
 ok(
@@ -122,11 +130,11 @@ ok(
   `found ${dialogs.length}`
 );
 
-const dialogsMissingModal = dialogs.filter(d => d.getAttribute('aria-modal') !== 'true');
+const dialogsWithModal = dialogs.filter(d => d.getAttribute('aria-modal'));
 ok(
-  'All role="dialog" elements have aria-modal="true"',
-  dialogsMissingModal.length === 0,
-  dialogsMissingModal.map(d => d.id || '(no id)').join(', ')
+  'No role="dialog" elements use aria-modal (background suppressed via inert on #app)',
+  dialogsWithModal.length === 0,
+  dialogsWithModal.map(d => d.id || '(no id)').join(', ')
 );
 
 const dialogsMissingLabel = dialogs.filter(d => !d.getAttribute('aria-labelledby'));
@@ -137,7 +145,7 @@ ok(
 );
 
 // ---------------------------------------------------------------------------
-// 5. Alert dialogs: must also have aria-describedby
+// 5. Alert dialogs: must have aria-describedby; must NOT use aria-modal
 // ---------------------------------------------------------------------------
 const alertDialogs = Array.from(document.querySelectorAll('[role="alertdialog"]'));
 ok(
@@ -146,11 +154,11 @@ ok(
   `found ${alertDialogs.length}`
 );
 
-const alertMissingModal = alertDialogs.filter(d => d.getAttribute('aria-modal') !== 'true');
+const alertWithModal = alertDialogs.filter(d => d.getAttribute('aria-modal'));
 ok(
-  'All role="alertdialog" elements have aria-modal="true"',
-  alertMissingModal.length === 0,
-  alertMissingModal.map(d => d.id || '(no id)').join(', ')
+  'No role="alertdialog" elements use aria-modal (background suppressed via inert on #app)',
+  alertWithModal.length === 0,
+  alertWithModal.map(d => d.id || '(no id)').join(', ')
 );
 
 const alertMissingLabel = alertDialogs.filter(d => !d.getAttribute('aria-labelledby'));
