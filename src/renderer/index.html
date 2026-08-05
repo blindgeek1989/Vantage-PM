@@ -362,7 +362,6 @@ tr:hover td{background:var(--surface2)}
 </style>
 </head>
 <body>
-<iframe src="about:blank" tabindex="-1" title="" style="position:absolute;width:1px;height:1px;border:none;opacity:0;pointer-events:none;overflow:hidden;"></iframe>
 <nav class="skip-links" aria-label="Skip links">
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <a class="skip-link" href="#main-nav">Skip to navigation</a>
@@ -386,7 +385,34 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 <div id="app">
-  <aside id="sidebar" aria-label="Sidebar">
+  <div id="main" role="main">
+    <header id="topbar" role="banner">
+      <h1 class="page-title" id="page-title">Dashboard</h1>
+      <div class="topbar-right" id="topbar-actions">
+        <button class="btn btn-secondary btn-sm" onclick="showSessionSummary()" aria-label="Session summary">📋 Summary</button>
+        <button class="btn btn-secondary btn-sm" onclick="openQuickCapture()" aria-label="Quick capture" aria-haspopup="dialog">⚡ Capture</button>
+        <button class="btn btn-secondary btn-sm" onclick="toggleGlobalSearch()" aria-label="Open global search" aria-expanded="false" id="search-toggle-btn">🔍 Search</button>
+        <button class="btn btn-secondary btn-sm" id="focus-btn" onclick="toggleFocusMode()" aria-pressed="false" aria-label="Toggle focus mode">🎯 Focus</button>
+        <button class="btn btn-secondary btn-sm" onclick="dailyBriefing()" aria-label="Daily briefing">📢 Briefing</button>
+        <button class="btn btn-primary" id="primary-btn" onclick="openAddTask()" aria-haspopup="dialog"><span aria-hidden="true">＋</span> Add Task</button>
+      </div>
+    </header>
+    <div id="search-bar" class="search-bar" hidden role="search" aria-label="Global search">
+      <div class="search-wrap">
+        <label for="global-search" class="sr-only">Search all tasks, projects, team, and activity</label>
+        <input id="global-search" class="form-input" type="search" placeholder="Search tasks, projects, team, activity…" autocomplete="off" oninput="runGlobalSearch(this.value)" aria-autocomplete="list" aria-controls="search-results"/>
+        <div id="search-results" class="search-results hidden" role="listbox" aria-label="Search results"></div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="toggleGlobalSearch()" aria-label="Close search">Close</button>
+    </div>
+    <nav id="breadcrumb" class="breadcrumb" aria-label="Current location">
+      <span aria-hidden="true">VantagePM</span>
+      <span class="breadcrumb-sep" aria-hidden="true">›</span>
+      <span class="breadcrumb-current" id="breadcrumb-current" aria-current="page">Dashboard</span>
+    </nav>
+    <div class="content" id="main-content" role="document" tabindex="-1" aria-label="Main content"></div>
+  </div>
+  <aside id="sidebar" aria-label="Application navigation">
     <div class="sb-header">
       <div aria-label="VantagePM" role="img">
         <svg viewBox="0 0 220 56" width="180" height="56" aria-hidden="true" focusable="false">
@@ -401,7 +427,7 @@ tr:hover td{background:var(--surface2)}
         </svg>
       </div>
     </div>
-    <nav id="main-nav" aria-label="Main navigation">
+    <nav id="main-nav" aria-label="Main navigation" tabindex="-1">
       <div class="nav-section" id="nl1">Workspace</div>
       <ul role="list" aria-labelledby="nl1" style="list-style:none">
         <li><button class="nav-btn" data-view="dashboard"  onclick="nav('dashboard',this)"  aria-current="page"><span class="nav-icon" aria-hidden="true">📊</span>Dashboard</button></li>
@@ -428,33 +454,6 @@ tr:hover td{background:var(--surface2)}
       <button class="btn btn-secondary btn-sm" onclick="syncDrive()" aria-label="Sync with Google Drive now"><span aria-hidden="true">🔄</span> Sync</button>
     </div>
   </aside>
-  <div id="main" role="main">
-    <header id="topbar" role="banner">
-      <h1 class="page-title" id="page-title">Dashboard</h1>
-      <div class="topbar-right" id="topbar-actions">
-        <button class="btn btn-secondary btn-sm" onclick="showSessionSummary()" aria-label="Session summary — Alt Y">📋 Summary</button>
-        <button class="btn btn-secondary btn-sm" onclick="openQuickCapture()" aria-label="Quick capture — Alt Q" aria-haspopup="dialog">⚡ Capture</button>
-        <button class="btn btn-secondary btn-sm" onclick="toggleGlobalSearch()" aria-label="Open global search — Alt slash" aria-expanded="false" id="search-toggle-btn">🔍 Search</button>
-        <button class="btn btn-secondary btn-sm" id="focus-btn" onclick="toggleFocusMode()" aria-pressed="false" aria-label="Toggle focus mode">🎯 Focus</button>
-        <button class="btn btn-secondary btn-sm" onclick="dailyBriefing()" aria-label="Daily briefing — Alt B">📢 Briefing</button>
-        <button class="btn btn-primary" id="primary-btn" onclick="openAddTask()" aria-haspopup="dialog"><span aria-hidden="true">＋</span> Add Task</button>
-      </div>
-    </header>
-    <div id="search-bar" class="search-bar" hidden role="search" aria-label="Global search">
-      <div class="search-wrap">
-        <label for="global-search" class="sr-only">Search all tasks, projects, team, and activity</label>
-        <input id="global-search" class="form-input" type="search" placeholder="Search tasks, projects, team, activity…" autocomplete="off" oninput="runGlobalSearch(this.value)" aria-autocomplete="list" aria-controls="search-results"/>
-        <div id="search-results" class="search-results hidden" role="listbox" aria-label="Search results"></div>
-      </div>
-      <button class="btn btn-secondary btn-sm" onclick="toggleGlobalSearch()" aria-label="Close search">Close</button>
-    </div>
-    <nav id="breadcrumb" class="breadcrumb" aria-label="Current location">
-      <span>VantagePM</span>
-      <span class="breadcrumb-sep" aria-hidden="true">›</span>
-      <span class="breadcrumb-current" id="breadcrumb-current" aria-current="page">Dashboard</span>
-    </nav>
-    <div class="content" id="main-content" role="document" tabindex="-1" aria-label="Main content"></div>
-  </div>
 </div>
 
 <!-- Task modal -->
@@ -462,7 +461,7 @@ tr:hover td{background:var(--surface2)}
   <div class="modal">
     <div class="modal-hd"><h2 class="modal-title" id="tm-title">Add Task</h2><button class="modal-close" onclick="closeModal('task-modal')" aria-label="Close task dialog">✕</button></div>
     <div id="priority-suggestion" class="priority-suggestion hidden" role="status" aria-live="polite"></div>
-    <div class="tabs-row" role="tablist" aria-label="Task sections">
+    <div class="tabs-row" role="tablist" aria-label="Task sections" onkeydown="handleTablistArrows(event)">
       <button class="tab-btn" role="tab" aria-selected="true"  aria-controls="tab-details"      id="tbtn-details"      onclick="switchTab('details')">Details</button>
       <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-time"         id="tbtn-time"         onclick="switchTab('time')">Time</button>
       <button class="tab-btn" role="tab" aria-selected="false" aria-controls="tab-comments"     id="tbtn-comments"     onclick="switchTab('comments')">Comments</button>
@@ -701,7 +700,7 @@ tr:hover td{background:var(--surface2)}
       <h2 class="modal-title" id="sw-title"><span aria-hidden="true">🚀</span> Welcome to VantagePM</h2>
     </div>
     <p style="font-size:.88rem;color:var(--muted);margin-bottom:16px;line-height:1.6">Choose how you'll use VantagePM, select your role, and enter your name to get started.</p>
-    <div class="tabs-row" role="tablist" aria-label="Select your mode">
+    <div class="tabs-row" role="tablist" aria-label="Select your mode" onkeydown="handleTablistArrows(event)">
       <button class="tab-btn" role="tab" aria-selected="true" aria-controls="setup-tab-a11y" id="setup-tbtn-a11y" onclick="switchSetupTab('a11y')">Digital Accessibility</button>
       <button class="tab-btn" role="tab" aria-selected="false" aria-controls="setup-tab-pm" id="setup-tbtn-pm" onclick="switchSetupTab('pm')">Project Management</button>
     </div>

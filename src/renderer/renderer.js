@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS = {
     globalSearch:'Alt+Slash',quickShortcuts:'Alt+K',quickCapture:'Alt+Q',sessionSummary:'Alt+Y',
   },
   notifications:true,autoSync:true,confirmOnDelete:true,dateFormat:'MM/DD/YYYY',
-  googleConnected:false,googleEmail:null,platform:'win32',appVersion:'9.4.0',agingThresholdDays:5,
+  googleConnected:false,googleEmail:null,platform:'win32',appVersion:'9.5.0',agingThresholdDays:5,
 };
 
 let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -96,7 +96,7 @@ async function init(){
     if(s.autoSync&&s.googleConnected&&s.driveFolderId) syncDrive();
   } else { applyTheme(); }
   nav('dashboard',document.querySelector('[data-view=dashboard]'));
-  if(!settings.hasSeenOnboarding||!settings.focusModeUser) openSetupModal();
+  if(!settings.hasSeenOnboarding||!settings.focusModeUser) setTimeout(openSetupModal, 300);
   applyAppMode();
   document.addEventListener('keydown',handleKey);
   document.addEventListener('click',closeAllRowMenus);
@@ -281,9 +281,21 @@ function renderWhatsNew(){
   return `<div role="region" aria-label="What's New in VantagePM">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
     <h2 style="font-size:1.15rem;font-weight:800;margin:0">What's New in VantagePM</h2>
-    <span class="badge badge-done">v9.4.0 current</span>
+    <span class="badge badge-done">v9.5.0 current</span>
   </div>
   <p style="font-size:.85rem;color:var(--muted);margin-bottom:24px">Latest features and fixes, most recent first.</p>
+
+  <section class="card" style="margin-bottom:16px">
+    <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.5.0</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">August 2026</span></div>
+    <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem">
+      <li><strong>Screen reader navigation overhaul</strong> — Main content now appears before the sidebar in DOM order, so JAWS, NVDA, and VoiceOver users immediately reach the page heading and content without navigating through all 13 sidebar links first. The sidebar (position:fixed) remains visually unchanged.</li>
+      <li><strong>Setup dialog auto-focus fixed</strong> — The welcome wizard now reliably draws screen reader focus on launch. Inert is applied to the skip-link bar, focus bar, and timer bar (not just the app body) when any dialog opens, preventing virtual cursor escape into background UI.</li>
+      <li><strong>Removed phantom iframe</strong> — An invisible <code>about:blank</code> iframe used in an earlier accessibility workaround was still being announced by JAWS as "about.frame". It has been removed.</li>
+      <li><strong>Dialog announcements improved</strong> — Dialogs now announce their name plus "Use Tab to navigate, Escape to close" when they open, giving new users immediate orientation.</li>
+      <li><strong>Tablist arrow-key navigation</strong> — Tab groups (setup wizard, task detail tabs) now correctly handle Left/Right/Home/End arrow keys for keyboard-only users, consistent with the ARIA Authoring Practices Guide tablist pattern.</li>
+      <li><strong>Skip-to-navigation link now works</strong> — The "Skip to navigation" skip link correctly focuses the main navigation landmark, which now has <code>tabindex="-1"</code> to accept programmatic focus.</li>
+    </ul>
+  </section>
 
   <section class="card" style="margin-bottom:16px">
     <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.4.0</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">August 2026</span></div>
@@ -435,8 +447,9 @@ function undoLast(){
   toast('Restored.','success');
 }
 
-function openModalEl(id){modalFocusReturn=document.activeElement;const el=document.getElementById(id);el.removeAttribute('hidden');modalStack.push(id);if(modalStack.length===1)document.getElementById('app').inert=true;setTimeout(()=>{const first=el.querySelector('input:not([type=hidden]),select,textarea,button,[tabindex]');if(first)first.focus();},250);el.addEventListener('keydown',trapFocus);const title=el.querySelector('.modal-title')?.textContent;if(title)announce(title+' dialog opened.');}
-function closeModal(id){const el=document.getElementById(id);el.setAttribute('hidden','');el.removeEventListener('keydown',trapFocus);modalStack=modalStack.filter(m=>m!==id);if(!modalStack.length)document.getElementById('app').inert=false;if(modalFocusReturn&&document.body.contains(modalFocusReturn))modalFocusReturn.focus();announce('Dialog closed.');}
+function openModalEl(id){modalFocusReturn=document.activeElement;const el=document.getElementById(id);el.removeAttribute('hidden');modalStack.push(id);if(modalStack.length===1){document.getElementById('app').inert=true;document.querySelector('.skip-links')?.setAttribute('inert','');const fb=document.getElementById('focus-bar');if(fb)fb.inert=true;const tb=document.getElementById('timer-bar');if(tb)tb.inert=true;}setTimeout(()=>{const first=el.querySelector('button,input:not([type=hidden]),select,textarea');if(first)first.focus();},400);el.addEventListener('keydown',trapFocus);const title=el.querySelector('.modal-title')?.textContent;if(title)announce(title+' dialog. Use Tab to navigate, Escape to close.');}
+function closeModal(id){const el=document.getElementById(id);el.setAttribute('hidden','');el.removeEventListener('keydown',trapFocus);modalStack=modalStack.filter(m=>m!==id);if(!modalStack.length){document.getElementById('app').inert=false;document.querySelector('.skip-links')?.removeAttribute('inert');const fb=document.getElementById('focus-bar');if(fb)fb.inert=false;const tb=document.getElementById('timer-bar');if(tb)tb.inert=false;}if(modalFocusReturn&&document.body.contains(modalFocusReturn))modalFocusReturn.focus();announce('Dialog closed.');}
+function handleTablistArrows(e){if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight'&&e.key!=='Home'&&e.key!=='End')return;const tabs=[...e.currentTarget.querySelectorAll('[role=tab]:not([disabled])')];const idx=tabs.indexOf(document.activeElement);if(idx<0)return;e.preventDefault();let next=idx;if(e.key==='ArrowRight')next=(idx+1)%tabs.length;else if(e.key==='ArrowLeft')next=(idx-1+tabs.length)%tabs.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=tabs.length-1;tabs[next].focus();tabs[next].click();}
 function closeTopModal(){if([...document.querySelectorAll('.row-menu')].some(m=>!m.hidden)){closeAllRowMenus();return;}if(!modalStack.length)return;const top=modalStack[modalStack.length-1];if(top==='setup-modal'){announce('Please complete setup to continue.');return;}closeModal(top);}
 function trapFocus(e){if(e.key!=='Tab')return;const modal=e.currentTarget.querySelector('.modal');if(!modal)return;const els=[...modal.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled&&el.offsetParent!==null);if(!els.length)return;const first=els[0],last=els[els.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
 const SHORTCUT_LABELS={newTask:'New Task',quickCapture:'Quick Capture',sessionSummary:'Session Summary',goToDashboard:'Dashboard',goToTasks:'Tasks',goToCalendar:'Calendar',goToTeam:'Team',goToReports:'Reports',goToSettings:'Settings',saveItem:'Save Item',closeModal:'Close Modal',searchTasks:'Search Tasks',syncDrive:'Sync Drive',toggleTheme:'Toggle Theme',focusNav:'Focus Navigation',focusMain:'Focus Main',dailyBriefing:'Daily Briefing',focusMode:'Focus Mode',exportCSV:'Export CSV',globalSearch:'Global Search',quickShortcuts:'Shortcuts Reference'};
