@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS = {
     globalSearch:'Alt+Slash',quickShortcuts:'Alt+K',quickCapture:'Alt+Q',sessionSummary:'Alt+Y',
   },
   notifications:true,autoSync:true,confirmOnDelete:true,dateFormat:'MM/DD/YYYY',
-  googleConnected:false,googleEmail:null,platform:'win32',appVersion:'9.5.0',agingThresholdDays:5,
+  googleConnected:false,googleEmail:null,platform:'win32',appVersion:'9.5.1',agingThresholdDays:5,
 };
 
 let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -96,7 +96,7 @@ async function init(){
     if(s.autoSync&&s.googleConnected&&s.driveFolderId) syncDrive();
   } else { applyTheme(); }
   nav('dashboard',document.querySelector('[data-view=dashboard]'));
-  if(!settings.hasSeenOnboarding||!settings.focusModeUser) setTimeout(openSetupModal, 300);
+  if(!settings.hasSeenOnboarding||!settings.focusModeUser) setTimeout(openSetupModal, 500);
   applyAppMode();
   document.addEventListener('keydown',handleKey);
   document.addEventListener('click',closeAllRowMenus);
@@ -281,19 +281,30 @@ function renderWhatsNew(){
   return `<div role="region" aria-label="What's New in VantagePM">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
     <h2 style="font-size:1.15rem;font-weight:800;margin:0">What's New in VantagePM</h2>
-    <span class="badge badge-done">v9.5.0 current</span>
+    <span class="badge badge-done">v9.5.1 current</span>
   </div>
   <p style="font-size:.85rem;color:var(--muted);margin-bottom:24px">Latest features and fixes, most recent first.</p>
 
   <section class="card" style="margin-bottom:16px">
+    <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.5.1</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">August 2026</span></div>
+    <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem">
+      <li><strong>JAWS dialog focus: overlay receives focus directly</strong> — All 17 dialogs now have <code>tabindex="-1"</code> on the overlay element. Focus lands on the <code>role="dialog"</code> container itself (not the first button inside it), which causes JAWS to announce the dialog name from <code>aria-labelledby</code> before the user tabs to controls. This is the correct ARIA dialog focus pattern.</li>
+      <li><strong>JAWS virtual cursor containment fixed</strong> — The toast element (<code>role="alert"</code>) is now <code>aria-hidden</code> when not visible, preventing JAWS from reading stale toast content while navigating in Browse Mode. The toast becomes visible to AT only when active.</li>
+      <li><strong>Dialog focus timeout raised to 700ms</strong> — Gives JAWS adequate time to rebuild the virtual buffer after <code>inert</code> changes before focus is claimed. The dialog announcement now fires inside the same timer, after focus, so JAWS hears the dialog name in the correct AT context.</li>
+      <li><strong>Setup modal delay raised to 500ms</strong> — At app launch, JAWS is given 500ms to fully commit to Browse Mode on the dashboard document before the welcome wizard opens and redirects focus.</li>
+      <li><strong>Onboarding mode selector redesigned</strong> — The "Switch Mode" button that opened a separate dialog has been replaced with inline radio cards directly within the Quick Setup section. Digital Accessibility and Project Management modes are now selectable without leaving the Onboarding view.</li>
+      <li><strong>Tab focus trap fixed for fixed-position overlays</strong> — The focus trap inside dialogs now uses <code>getComputedStyle</code> visibility checks instead of <code>offsetParent</code>, which is unreliable for elements inside <code>position:fixed</code> containers.</li>
+    </ul>
+  </section>
+
+  <section class="card" style="margin-bottom:16px">
     <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.5.0</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">August 2026</span></div>
     <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem">
-      <li><strong>Screen reader navigation overhaul</strong> — Main content now appears before the sidebar in DOM order, so JAWS, NVDA, and VoiceOver users immediately reach the page heading and content without navigating through all 13 sidebar links first. The sidebar (position:fixed) remains visually unchanged.</li>
-      <li><strong>Setup dialog auto-focus fixed</strong> — The welcome wizard now reliably draws screen reader focus on launch. Inert is applied to the skip-link bar, focus bar, and timer bar (not just the app body) when any dialog opens, preventing virtual cursor escape into background UI.</li>
-      <li><strong>Removed phantom iframe</strong> — An invisible <code>about:blank</code> iframe used in an earlier accessibility workaround was still being announced by JAWS as "about.frame". It has been removed.</li>
-      <li><strong>Dialog announcements improved</strong> — Dialogs now announce their name plus "Use Tab to navigate, Escape to close" when they open, giving new users immediate orientation.</li>
-      <li><strong>Tablist arrow-key navigation</strong> — Tab groups (setup wizard, task detail tabs) now correctly handle Left/Right/Home/End arrow keys for keyboard-only users, consistent with the ARIA Authoring Practices Guide tablist pattern.</li>
-      <li><strong>Skip-to-navigation link now works</strong> — The "Skip to navigation" skip link correctly focuses the main navigation landmark, which now has <code>tabindex="-1"</code> to accept programmatic focus.</li>
+      <li><strong>Screen reader navigation overhaul</strong> — Main content now appears before the sidebar in DOM order, so JAWS, NVDA, and VoiceOver users reach the page heading and content without navigating all 13 sidebar links first.</li>
+      <li><strong>Setup dialog auto-focus</strong> — Inert applied to skip-link bar, focus bar, and timer bar when any dialog opens, preventing virtual cursor escape into background UI.</li>
+      <li><strong>Removed phantom iframe</strong> — An invisible <code>about:blank</code> iframe was being announced by JAWS as "about.frame". Removed.</li>
+      <li><strong>Tablist arrow-key navigation</strong> — Tab groups now handle Left/Right/Home/End arrow keys per the ARIA APG tablist pattern.</li>
+      <li><strong>Skip-to-navigation link</strong> — Main navigation landmark now has <code>tabindex="-1"</code> so the skip link can move focus to it.</li>
     </ul>
   </section>
 
@@ -381,7 +392,8 @@ function renderOnboarding(){
   const canChangeRole=!!settings.persona;
   const isPM=settings.appMode==='pm';
   const onboardRoles=isPM?[{v:'pm-solo',n:'Solo Project Manager',d:'Gets a single project with realistic sample tasks.'},{v:'pm-lead',n:'Team Lead',d:'Gets team members, two projects, distributed tasks, and milestones.'},{v:'pm-manager',n:'Program Manager',d:'Gets three projects, a full team, time logs, milestones, and filter presets.'},{v:'pm-blank',n:'Blank Slate',d:'No sample data. Start fresh at your own pace.'}]:[{v:'tester',n:'Accessibility Tester',d:'Solo auditor. Gets one audit project, five test tasks, two templates, and filter presets.'},{v:'lead',n:'Project Lead',d:'Leading a small remediation team. Gets team members, two projects, tasks, and milestones.'},{v:'manager',n:'Project Manager',d:'Managing multiple accessibility programs. Gets three projects, full team, time logs, and filter presets.'},{v:'blank',n:'Blank Slate',d:'No sample data. Start fresh at your own pace.'}];
-  const setupSection=canChangeRole?`<section class="card" style="margin-bottom:20px" aria-labelledby="persona-h2"><h2 id="persona-h2" style="font-size:1rem;font-weight:700;margin-bottom:6px"><span aria-hidden="true">🚀</span> Quick Setup</h2><p style="font-size:.84rem;color:var(--muted);margin-bottom:14px;line-height:1.6">${personaLabel?`Currently set up as <strong>${esc(personaLabel)}</strong>. Select a different role below to reseed sample data.`:'Choose your role to pre-populate VantagePM with realistic sample data.'}</p><fieldset style="border:none;padding:0;margin:0 0 14px"><legend style="font-size:.88rem;font-weight:700;margin-bottom:10px;display:block">Select a role</legend><div class="setup-role-grid">${onboardRoles.map(r=>`<label class="setup-role-option"><span class="setup-role-radio-row"><input type="radio" name="onboard-role" value="${r.v}"${settings.persona===r.v?' checked':''}/><span class="setup-role-name">${r.n}</span></span><span class="setup-role-desc">${r.d}</span></label>`).join('')}</div></fieldset><button class="btn btn-secondary btn-sm" onclick="openSetupModal()" style="margin-right:8px"><span aria-hidden="true">🔀</span> Switch Mode</button><button class="btn btn-primary btn-sm" onclick="applyOnboardingPersona()"><span aria-hidden="true">🔁</span> Apply Setup</button></section>`:'';
+  const setupSection=canChangeRole?`<section class="card" style="margin-bottom:20px" aria-labelledby="persona-h2"><h2 id="persona-h2" style="font-size:1rem;font-weight:700;margin-bottom:14px"><span aria-hidden="true">🚀</span> Quick Setup</h2><fieldset style="border:none;padding:0;margin:0 0 16px"><legend style="font-size:.88rem;font-weight:700;margin-bottom:10px;display:block">App mode</legend><div style="display:flex;gap:10px;flex-wrap:wrap"><label class="setup-role-option" style="flex:1;min-width:200px"><span class="setup-role-radio-row"><input type="radio" name="onboard-mode" value="accessibility" ${!isPM?'checked':''} onchange="switchOnboardingMode('accessibility')"/><span class="setup-role-name">Digital Accessibility</span></span><span class="setup-role-desc">Full app including WCAG Audit, accessibility personas, and audit-focused sample data.</span></label><label class="setup-role-option" style="flex:1;min-width:200px"><span class="setup-role-radio-row"><input type="radio" name="onboard-mode" value="pm" ${isPM?'checked':''} onchange="switchOnboardingMode('pm')"/><span class="setup-role-name">Project Management</span></span><span class="setup-role-desc">General project management without WCAG audit tools. PM personas and sample data.</span></label></div></fieldset><fieldset style="border:none;padding:0;margin:0 0 14px"><legend style="font-size:.88rem;font-weight:700;margin-bottom:10px;display:block">Your role${personaLabel?` — currently <strong>${esc(personaLabel)}</strong>`:''}</legend><div class="setup-role-grid">${onboardRoles.map(r=>`<label class="setup-role-option"><span class="setup-role-radio-row"><input type="radio" name="onboard-role" value="${r.v}"${settings.persona===r.v?' checked':''}/><span class="setup-role-name">${r.n}</span></span><span class="setup-role-desc">${r.d}</span></label>`).join('')}</div></fieldset><button class="btn btn-primary btn-sm" onclick="applyOnboardingPersona()"><span aria-hidden="true">🔁</span> Apply Setup</button></section>`:'';
+
   const steps=[
     {num:1,title:'Welcome to VantagePM',desc:'VantagePM is a WCAG 2.2 AA compliant project management app built for digital accessibility professionals. Whether you work independently or within an organization, VantagePM helps you manage accessibility projects, audits, and team tasks across any company or client.',srHint:`<strong>NVDA:</strong> Press NVDA+Space to switch between Browse and Focus Mode. Use Tab to move between controls.<br><strong>JAWS:</strong> Press Insert+Z to toggle Virtual PC Cursor.<br><strong>VoiceOver:</strong> Use VO+Arrow keys to navigate, VO+Space to activate.`,action:null},
     {num:2,title:'Set up your profile',desc:'Go to Settings → General and set your name as the Focus Mode User. This personalizes your Daily Briefing and Focus Mode to show your assigned tasks. You can update this anytime as your role or team changes. Remember to press Save Settings after making changes.',srHint:`Press <strong>Alt+Comma</strong> to open Settings. Every settings tab has a <strong>Save Settings</strong> button and a <strong>Cancel</strong> button at the bottom. Changes do not save until you press Save Settings.`,action:{label:'Open Settings',fn:"nav('settings')"}},
@@ -447,11 +459,43 @@ function undoLast(){
   toast('Restored.','success');
 }
 
-function openModalEl(id){modalFocusReturn=document.activeElement;const el=document.getElementById(id);el.removeAttribute('hidden');modalStack.push(id);if(modalStack.length===1){document.getElementById('app').inert=true;document.querySelector('.skip-links')?.setAttribute('inert','');const fb=document.getElementById('focus-bar');if(fb)fb.inert=true;const tb=document.getElementById('timer-bar');if(tb)tb.inert=true;}setTimeout(()=>{const first=el.querySelector('button,input:not([type=hidden]),select,textarea');if(first)first.focus();},400);el.addEventListener('keydown',trapFocus);const title=el.querySelector('.modal-title')?.textContent;if(title)announce(title+' dialog. Use Tab to navigate, Escape to close.');}
-function closeModal(id){const el=document.getElementById(id);el.setAttribute('hidden','');el.removeEventListener('keydown',trapFocus);modalStack=modalStack.filter(m=>m!==id);if(!modalStack.length){document.getElementById('app').inert=false;document.querySelector('.skip-links')?.removeAttribute('inert');const fb=document.getElementById('focus-bar');if(fb)fb.inert=false;const tb=document.getElementById('timer-bar');if(tb)tb.inert=false;}if(modalFocusReturn&&document.body.contains(modalFocusReturn))modalFocusReturn.focus();announce('Dialog closed.');}
+function openModalEl(id){
+  modalFocusReturn=document.activeElement;
+  const el=document.getElementById(id);
+  el.removeAttribute('hidden');
+  modalStack.push(id);
+  if(modalStack.length===1){
+    document.getElementById('app').inert=true;
+    document.querySelector('.skip-links')?.setAttribute('inert','');
+    const fb=document.getElementById('focus-bar');if(fb)fb.inert=true;
+    const tb=document.getElementById('timer-bar');if(tb)tb.inert=true;
+    const ts=document.getElementById('toast');if(ts)ts.setAttribute('aria-hidden','true');
+  }
+  const title=el.querySelector('.modal-title')?.textContent||'';
+  setTimeout(()=>{
+    el.focus();
+    if(title)announce(title+' dialog. Use Tab to navigate controls, Escape to close.');
+  },700);
+  el.addEventListener('keydown',trapFocus);
+}
+function closeModal(id){
+  const el=document.getElementById(id);
+  el.setAttribute('hidden','');
+  el.removeEventListener('keydown',trapFocus);
+  modalStack=modalStack.filter(m=>m!==id);
+  if(!modalStack.length){
+    document.getElementById('app').inert=false;
+    document.querySelector('.skip-links')?.removeAttribute('inert');
+    const fb=document.getElementById('focus-bar');if(fb)fb.inert=false;
+    const tb=document.getElementById('timer-bar');if(tb)tb.inert=false;
+    const ts=document.getElementById('toast');if(ts)ts.removeAttribute('aria-hidden');
+  }
+  if(modalFocusReturn&&document.body.contains(modalFocusReturn))modalFocusReturn.focus();
+  announce('Dialog closed.');
+}
 function handleTablistArrows(e){if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight'&&e.key!=='Home'&&e.key!=='End')return;const tabs=[...e.currentTarget.querySelectorAll('[role=tab]:not([disabled])')];const idx=tabs.indexOf(document.activeElement);if(idx<0)return;e.preventDefault();let next=idx;if(e.key==='ArrowRight')next=(idx+1)%tabs.length;else if(e.key==='ArrowLeft')next=(idx-1+tabs.length)%tabs.length;else if(e.key==='Home')next=0;else if(e.key==='End')next=tabs.length-1;tabs[next].focus();tabs[next].click();}
 function closeTopModal(){if([...document.querySelectorAll('.row-menu')].some(m=>!m.hidden)){closeAllRowMenus();return;}if(!modalStack.length)return;const top=modalStack[modalStack.length-1];if(top==='setup-modal'){announce('Please complete setup to continue.');return;}closeModal(top);}
-function trapFocus(e){if(e.key!=='Tab')return;const modal=e.currentTarget.querySelector('.modal');if(!modal)return;const els=[...modal.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled&&el.offsetParent!==null);if(!els.length)return;const first=els[0],last=els[els.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
+function trapFocus(e){if(e.key!=='Tab')return;const modal=e.currentTarget.querySelector('.modal');if(!modal)return;const els=[...modal.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled&&!el.closest('[hidden]')&&getComputedStyle(el).display!=='none'&&getComputedStyle(el).visibility!=='hidden');if(!els.length)return;const first=els[0],last=els[els.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}
 const SHORTCUT_LABELS={newTask:'New Task',quickCapture:'Quick Capture',sessionSummary:'Session Summary',goToDashboard:'Dashboard',goToTasks:'Tasks',goToCalendar:'Calendar',goToTeam:'Team',goToReports:'Reports',goToSettings:'Settings',saveItem:'Save Item',closeModal:'Close Modal',searchTasks:'Search Tasks',syncDrive:'Sync Drive',toggleTheme:'Toggle Theme',focusNav:'Focus Navigation',focusMain:'Focus Main',dailyBriefing:'Daily Briefing',focusMode:'Focus Mode',exportCSV:'Export CSV',globalSearch:'Global Search',quickShortcuts:'Shortcuts Reference'};
 const SHORTCUT_SR_NOTES={};
 
@@ -511,19 +555,20 @@ function toggleTheme(){settings.theme=settings.theme==='dark'?'light':'dark';app
 let toastTimer=null;
 function toast(msg,type='',action=null){
   const el=document.getElementById('toast');
+  el.removeAttribute('aria-hidden');
   el.className='show'+(type?' '+type:'');
   if(action){
     el.innerHTML='';
     const span=document.createElement('span');span.textContent=msg;el.appendChild(span);
     const btn=document.createElement('button');btn.className='toast-undo-btn';btn.textContent=action.label;
     btn.setAttribute('aria-label',action.label+'. Activate to undo last deletion.');
-    btn.onclick=()=>{action.fn();el.className='';clearTimeout(toastTimer);};
+    btn.onclick=()=>{action.fn();el.className='';el.setAttribute('aria-hidden','true');clearTimeout(toastTimer);};
     el.appendChild(btn);
   } else {
     el.textContent=msg;
   }
   clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>{el.className='';},5000);
+  toastTimer=setTimeout(()=>{el.className='';el.setAttribute('aria-hidden','true');},5000);
 }
 function announce(msg){const r=document.getElementById('live');r.textContent='';requestAnimationFrame(()=>{r.textContent=msg;});}
 
@@ -1384,6 +1429,7 @@ function closeAllRowMenus(){document.querySelectorAll('.row-menu').forEach(m=>{m
 function openChangeRole(id){changeRoleMemberId=id;const m=members.find(m=>m.id===id);if(!m)return;document.getElementById('cr-member-name').textContent=`Changing role for: ${m.name} (current: ${m.role})`;document.getElementById('cr-role').value=m.role||'';document.getElementById('cr-role-err').classList.add('hidden');closeAllRowMenus();openModalEl('change-role-modal');}
 function saveChangeRole(){const role=(document.getElementById('cr-role')?.value||'').trim();if(!role){document.getElementById('cr-role-err').classList.remove('hidden');announce('Please enter a role.');return;}document.getElementById('cr-role-err').classList.add('hidden');const m=members.find(m=>m.id===changeRoleMemberId);if(!m)return;const prev=m.role;m.role=role;logActivity(`${m.name}: role changed from "${prev}" to "${role}"`,'👤');scheduleLocalSave();closeModal('change-role-modal');nav('team',document.querySelector('[data-view=team]'));announce(`${m.name}'s role updated to ${role}.`);toast('Role updated.','success');}
 function applyOnboardingPersona(){const el=document.querySelector('input[name="onboard-role"]:checked');if(!el){announce('Please select a role first.');return;}if(settings.persona==='tester'&&el.value!=='tester'){document.getElementById('cf-title').textContent='Changing Your Role';document.getElementById('cf-desc').textContent='You are currently set up as an Accessibility Tester. Moving to a different role will replace your workspace and sample data. If you are unsure whether this change is right for you, check with your project lead or administrator before continuing.';document.getElementById('cf-ok').textContent='Change Role';document.getElementById('cf-ok').onclick=()=>{closeModal('confirm-modal');setupPersona(el.value);};openModalEl('confirm-modal');return;}setupPersona(el.value);}
+function switchOnboardingMode(mode){settings.appMode=mode;if(IS_ELECTRON)window.electronAPI.saveSettings({appMode:mode});applyAppMode();nav('onboarding',document.querySelector('[data-view=onboarding]'));announce(mode==='pm'?'Project Management mode selected. Role options updated.':'Digital Accessibility mode selected. Role options updated.');}
 function switchSetupTab(tab){activeSetupTab=tab;document.getElementById('setup-tbtn-a11y').setAttribute('aria-selected',String(tab==='a11y'));document.getElementById('setup-tbtn-pm').setAttribute('aria-selected',String(tab==='pm'));document.getElementById('setup-tab-a11y').hidden=tab!=='a11y';document.getElementById('setup-tab-pm').hidden=tab!=='pm';document.getElementById('setup-role-a11y-err').classList.add('hidden');document.getElementById('setup-role-pm-err').classList.add('hidden');announce(tab==='a11y'?'Digital Accessibility tab.':'Project Management tab.');}
 function openSetupModal(){
   const tab=settings.appMode==='pm'?'pm':'a11y';
