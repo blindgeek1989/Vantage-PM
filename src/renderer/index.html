@@ -453,12 +453,12 @@ tr:hover td{background:var(--surface2)}
       <span class="breadcrumb-sep" aria-hidden="true">›</span>
       <span class="breadcrumb-current" id="breadcrumb-current" aria-current="page">Dashboard</span>
     </nav>
-    <div class="content" id="main-content" tabindex="-1" aria-labelledby="page-title"></div>
+    <div class="content" id="main-content" role="document" tabindex="-1" aria-label="Main content"></div>
   </div>
 </div>
 
 <!-- Task modal -->
-<div id="task-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="tm-title">
+<div id="task-modal" class="overlay" hidden role="dialog" aria-labelledby="tm-title">
   <div class="modal">
     <div class="modal-hd"><h2 class="modal-title" id="tm-title">Add Task</h2><button class="modal-close" onclick="closeModal('task-modal')" aria-label="Close task dialog">✕</button></div>
     <div id="priority-suggestion" class="priority-suggestion hidden" role="status" aria-live="polite"></div>
@@ -525,7 +525,7 @@ tr:hover td{background:var(--surface2)}
 </div>
 
 <!-- Project / milestone / member / confirm / folder / shortcuts / briefing modals (same as v4) -->
-<div id="project-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="pm-title">
+<div id="project-modal" class="overlay" hidden role="dialog" aria-labelledby="pm-title">
   <div class="modal" style="max-width:480px">
     <div class="modal-hd"><h2 class="modal-title" id="pm-title">Add Project</h2><button class="modal-close" onclick="closeModal('project-modal')" aria-label="Close">✕</button></div>
     <div class="form-group"><label class="form-label" for="p-name">Name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="p-name" type="text" aria-required="true"/></div>
@@ -534,7 +534,7 @@ tr:hover td{background:var(--surface2)}
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('project-modal')">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Add Project</button></div>
   </div>
 </div>
-<div id="milestone-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ml-title">
+<div id="milestone-modal" class="overlay" hidden role="dialog" aria-labelledby="ml-title">
   <div class="modal" style="max-width:480px">
     <div class="modal-hd"><h2 class="modal-title" id="ml-title">Add Milestone</h2><button class="modal-close" onclick="closeModal('milestone-modal')" aria-label="Close">✕</button></div>
     <div class="form-group"><label class="form-label" for="ml-name">Name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="ml-name" type="text" aria-required="true"/></div>
@@ -544,7 +544,7 @@ tr:hover td{background:var(--surface2)}
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('milestone-modal')">Cancel</button><button class="btn btn-primary" onclick="saveMilestone()">Add Milestone</button></div>
   </div>
 </div>
-<div id="status-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="st-title">
+<div id="status-modal" class="overlay" hidden role="dialog" aria-labelledby="st-title">
   <div class="modal" style="max-width:460px">
     <div class="modal-hd"><h2 class="modal-title" id="st-title">Add Custom Status</h2><button class="modal-close" onclick="closeModal('status-modal')" aria-label="Close">✕</button></div>
     <div class="form-group"><label class="form-label" for="st-name">Status name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="st-name" type="text" placeholder="e.g. Blocked, In Review…" aria-required="true"/></div>
@@ -558,7 +558,7 @@ tr:hover td{background:var(--surface2)}
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('status-modal')">Cancel</button><button class="btn btn-primary" onclick="saveCustomStatus()">Add Status</button></div>
   </div>
 </div>
-<div id="member-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="mm-title">
+<div id="member-modal" class="overlay" hidden role="dialog" aria-labelledby="mm-title">
   <div class="modal">
     <div class="modal-hd"><h2 class="modal-title" id="mm-title">Add Team Member</h2><button class="modal-close" onclick="closeModal('member-modal')" aria-label="Close">✕</button></div>
     <div class="grid-2">
@@ -571,28 +571,28 @@ tr:hover td{background:var(--surface2)}
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('member-modal')">Cancel</button><button class="btn btn-primary" onclick="saveMember()">Add Member</button></div>
   </div>
 </div>
-<div id="confirm-modal" class="overlay" hidden role="alertdialog" aria-modal="true" aria-labelledby="cf-title" aria-describedby="cf-desc">
+<div id="confirm-modal" class="overlay" hidden role="alertdialog" aria-labelledby="cf-title" aria-describedby="cf-desc">
   <div class="modal" style="max-width:400px">
     <div class="modal-hd"><h2 class="modal-title" id="cf-title">Confirm</h2><button class="modal-close" onclick="closeModal('confirm-modal')" aria-label="Close">✕</button></div>
     <p id="cf-desc"></p>
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Cancel</button><button class="btn btn-danger" id="cf-ok">Confirm</button></div>
   </div>
 </div>
-<div id="folder-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="fm-title">
+<div id="folder-modal" class="overlay" hidden role="dialog" aria-labelledby="fm-title">
   <div class="modal" style="max-width:480px">
     <div class="modal-hd"><h2 class="modal-title" id="fm-title">Select Google Drive Folder</h2><button class="modal-close" onclick="closeModal('folder-modal')" aria-label="Close">✕</button></div>
     <div id="folder-list-wrap" role="listbox" aria-label="Drive folders" style="max-height:220px;overflow-y:auto;border:2px solid var(--border);border-radius:var(--radius);"><div style="padding:20px;text-align:center;color:var(--muted)">Loading…</div></div>
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('folder-modal')">Cancel</button><button class="btn btn-primary" id="folder-ok" onclick="confirmFolder()" disabled>Select Folder</button></div>
   </div>
 </div>
-<div id="shortcuts-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="sh-title">
+<div id="shortcuts-modal" class="overlay" hidden role="dialog" aria-labelledby="sh-title">
   <div class="modal" style="max-width:620px">
     <div class="modal-hd"><h2 class="modal-title" id="sh-title"><span aria-hidden="true">⌨️</span> Keyboard Shortcuts</h2><button class="modal-close" onclick="closeModal('shortcuts-modal')" aria-label="Close">✕</button></div>
     <div id="shortcuts-list"></div>
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('shortcuts-modal')">Close</button><button class="btn btn-primary" onclick="closeModal('shortcuts-modal');nav('settings');setTimeout(()=>showSettingsTab('shortcuts'),150)">Edit Shortcuts</button></div>
   </div>
 </div>
-<div id="briefing-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="br-title">
+<div id="briefing-modal" class="overlay" hidden role="dialog" aria-labelledby="br-title">
   <div class="modal" style="max-width:560px">
     <div class="modal-hd"><h2 class="modal-title" id="br-title">📢 Daily Briefing</h2><button class="modal-close" onclick="closeModal('briefing-modal')" aria-label="Close">✕</button></div>
     <div id="briefing-content" aria-live="polite"></div>
@@ -600,7 +600,7 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 <!-- Unsaved changes warning modal -->
-<div id="unsaved-modal" class="overlay" hidden role="alertdialog" aria-modal="true" aria-labelledby="uw-title" aria-describedby="uw-desc">
+<div id="unsaved-modal" class="overlay" hidden role="alertdialog" aria-labelledby="uw-title" aria-describedby="uw-desc">
   <div class="modal" style="max-width:400px">
     <div class="modal-hd"><h2 class="modal-title" id="uw-title">Unsaved Changes</h2><button class="modal-close" onclick="closeModal('unsaved-modal')" aria-label="Close">✕</button></div>
     <p id="uw-desc">You have unsaved changes on this settings tab. What would you like to do?</p>
@@ -612,7 +612,7 @@ tr:hover td{background:var(--surface2)}
 </div>
 
 <!-- Quick capture modal -->
-<div id="qc-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="qc-title">
+<div id="qc-modal" class="overlay" hidden role="dialog" aria-labelledby="qc-title">
   <div class="modal qc-modal">
     <div class="modal-hd"><h2 class="modal-title" id="qc-title">⚡ Quick Capture</h2><button class="modal-close" onclick="closeModal('qc-modal')" aria-label="Close quick capture">✕</button></div>
     <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px">Drop a task fast. You'll assign a project and person before it saves.</p>
@@ -657,7 +657,7 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 <!-- Session summary modal -->
-<div id="session-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ss-title">
+<div id="session-modal" class="overlay" hidden role="dialog" aria-labelledby="ss-title">
   <div class="modal" style="max-width:580px">
     <div class="modal-hd"><h2 class="modal-title" id="ss-title"><span aria-hidden="true">📋</span> Session Summary</h2><button class="modal-close" onclick="closeModal('session-modal')" aria-label="Close">✕</button></div>
     <div id="session-content" aria-live="polite"></div>
@@ -666,7 +666,7 @@ tr:hover td{background:var(--surface2)}
 </div>
 
 <!-- Project notes modal -->
-<div id="notes-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="nm-title">
+<div id="notes-modal" class="overlay" hidden role="dialog" aria-labelledby="nm-title">
   <div class="modal" style="max-width:580px">
     <div class="modal-hd"><h2 class="modal-title" id="nm-title"><span aria-hidden="true">📝</span> Project Notes</h2><button class="modal-close" onclick="closeModal('notes-modal')" aria-label="Close">✕</button></div>
     <div id="notes-project-label" style="font-size:.82rem;color:var(--muted);margin-bottom:14px"></div>
@@ -678,7 +678,7 @@ tr:hover td{background:var(--surface2)}
 </div>
 
 <!-- Change role modal (lead/manager only) -->
-<div id="change-role-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="cr-title">
+<div id="change-role-modal" class="overlay" hidden role="dialog" aria-labelledby="cr-title">
   <div class="modal" style="max-width:380px">
     <div class="modal-hd"><h2 class="modal-title" id="cr-title">Change Role</h2><button class="modal-close" onclick="closeModal('change-role-modal')" aria-label="Close">✕</button></div>
     <p id="cr-member-name" style="font-size:.88rem;font-weight:600;margin-bottom:14px"></p>
@@ -694,35 +694,67 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
-<!-- Initial setup wizard (non-dismissable — user must complete role + name) -->
-<div id="setup-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="sw-title" aria-describedby="sw-intro">
-  <div class="modal" style="max-width:580px">
+<!-- Initial setup wizard (non-dismissable — user must complete mode + role + name) -->
+<div id="setup-modal" class="overlay" hidden role="dialog" aria-labelledby="sw-title">
+  <div class="modal" style="max-width:640px">
     <div class="modal-hd">
       <h2 class="modal-title" id="sw-title"><span aria-hidden="true">🚀</span> Welcome to VantagePM</h2>
     </div>
-    <p id="sw-intro" style="font-size:.88rem;color:var(--muted);margin-bottom:20px;line-height:1.6">Choose your role and enter your name to personalize VantagePM. Sample data matching your workflow will be pre-loaded so you can explore right away.</p>
-    <fieldset style="border:none;padding:0;margin:0 0 18px">
-      <legend style="font-size:.9rem;font-weight:700;margin-bottom:10px;display:block">Your role<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></legend>
-      <div class="setup-role-grid">
-        <label class="setup-role-option">
-          <span class="setup-role-radio-row"><span class="setup-role-name">Accessibility Tester</span><input type="radio" name="setup-role" value="tester"/></span>
-          <span class="setup-role-desc">Solo auditor running WCAG tests. Gets an audit project, test tasks, and templates pre-loaded.</span>
-        </label>
-        <label class="setup-role-option">
-          <span class="setup-role-radio-row"><span class="setup-role-name">Project Lead</span><input type="radio" name="setup-role" value="lead"/></span>
-          <span class="setup-role-desc">Leading a small remediation team. Gets team members, a sprint project, distributed tasks, and milestones.</span>
-        </label>
-        <label class="setup-role-option">
-          <span class="setup-role-radio-row"><span class="setup-role-name">Project Manager</span><input type="radio" name="setup-role" value="manager"/></span>
-          <span class="setup-role-desc">Managing multiple accessibility programs. Gets 3 projects, a full team, time logs, and filter presets.</span>
-        </label>
-        <label class="setup-role-option">
-          <span class="setup-role-radio-row"><span class="setup-role-name">Blank Slate</span><input type="radio" name="setup-role" value="blank"/></span>
-          <span class="setup-role-desc">Start fresh with no sample data — add your own projects and tasks at your own pace.</span>
-        </label>
-      </div>
-      <span class="form-error hidden" id="setup-role-err" role="alert">Please select a role to continue.</span>
-    </fieldset>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:16px;line-height:1.6">Choose how you'll use VantagePM, select your role, and enter your name to get started.</p>
+    <div class="tabs-row" role="tablist" aria-label="Select your mode">
+      <button class="tab-btn" role="tab" aria-selected="true" aria-controls="setup-tab-a11y" id="setup-tbtn-a11y" onclick="switchSetupTab('a11y')">Digital Accessibility</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="setup-tab-pm" id="setup-tbtn-pm" onclick="switchSetupTab('pm')">Project Management</button>
+    </div>
+    <div id="setup-tab-a11y" role="tabpanel" aria-labelledby="setup-tbtn-a11y">
+      <p style="font-size:.84rem;color:var(--muted);margin:12px 0 14px;line-height:1.6">Choose your role as a digital accessibility professional. Sample audit projects, WCAG tasks, and templates matching your workflow will be pre-loaded.</p>
+      <fieldset style="border:none;padding:0;margin:0 0 18px">
+        <legend style="font-size:.9rem;font-weight:700;margin-bottom:10px;display:block">Your role<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></legend>
+        <div class="setup-role-grid">
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Accessibility Tester</span><input type="radio" name="setup-role" value="tester"/></span>
+            <span class="setup-role-desc">Solo auditor running WCAG tests. Gets an audit project, test tasks, and templates pre-loaded.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Project Lead</span><input type="radio" name="setup-role" value="lead"/></span>
+            <span class="setup-role-desc">Leading a small remediation team. Gets team members, a sprint project, distributed tasks, and milestones.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Project Manager</span><input type="radio" name="setup-role" value="manager"/></span>
+            <span class="setup-role-desc">Managing multiple accessibility programs. Gets 3 projects, a full team, time logs, and filter presets.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Blank Slate</span><input type="radio" name="setup-role" value="blank"/></span>
+            <span class="setup-role-desc">Start fresh with no sample data — add your own projects and tasks at your own pace.</span>
+          </label>
+        </div>
+        <span class="form-error hidden" id="setup-role-a11y-err" role="alert">Please select a role to continue.</span>
+      </fieldset>
+    </div>
+    <div id="setup-tab-pm" role="tabpanel" aria-labelledby="setup-tbtn-pm" hidden>
+      <p style="font-size:.84rem;color:var(--muted);margin:12px 0 14px;line-height:1.6">Choose your role as a project manager. Sample projects and tasks will be pre-loaded. WCAG audit tools will be hidden from the interface.</p>
+      <fieldset style="border:none;padding:0;margin:0 0 18px">
+        <legend style="font-size:.9rem;font-weight:700;margin-bottom:10px;display:block">Your role<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></legend>
+        <div class="setup-role-grid">
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Solo Project Manager</span><input type="radio" name="setup-role-pm" value="pm-solo"/></span>
+            <span class="setup-role-desc">Managing your own projects and tasks. Gets a single project with realistic sample tasks pre-loaded.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Team Lead</span><input type="radio" name="setup-role-pm" value="pm-lead"/></span>
+            <span class="setup-role-desc">Leading a small project team. Gets team members, two projects, distributed tasks, and milestones.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Program Manager</span><input type="radio" name="setup-role-pm" value="pm-manager"/></span>
+            <span class="setup-role-desc">Managing multiple programs. Gets three projects, a full team, time logs, milestones, and filter presets.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Blank Slate</span><input type="radio" name="setup-role-pm" value="pm-blank"/></span>
+            <span class="setup-role-desc">Start fresh with no sample data — add your own projects and tasks at your own pace.</span>
+          </label>
+        </div>
+        <span class="form-error hidden" id="setup-role-pm-err" role="alert">Please select a role to continue.</span>
+      </fieldset>
+    </div>
     <div class="form-group">
       <label class="form-label" for="setup-name">Your name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
       <input class="form-input" id="setup-name" type="text" autocomplete="name" placeholder="e.g. Aaron Smith" aria-required="true" aria-describedby="setup-name-hint setup-name-err"/>
@@ -736,7 +768,7 @@ tr:hover td{background:var(--surface2)}
 </div>
 
 <!-- Save filter preset modal -->
-<div id="preset-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="pr-title">
+<div id="preset-modal" class="overlay" hidden role="dialog" aria-labelledby="pr-title">
   <div class="modal" style="max-width:400px">
     <div class="modal-hd"><h2 class="modal-title" id="pr-title">Save Filter Preset</h2><button class="modal-close" onclick="closeModal('preset-modal')" aria-label="Close">✕</button></div>
     <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px">Saves the current status, priority, project, and search filters as a named preset you can reuse.</p>
@@ -745,7 +777,7 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 <!-- Batch time log modal -->
-<div id="timelog-batch-modal" class="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="tlb-title">
+<div id="timelog-batch-modal" class="overlay" hidden role="dialog" aria-labelledby="tlb-title">
   <div class="modal" style="max-width:580px">
     <div class="modal-hd"><h2 class="modal-title" id="tlb-title">Log Time — Multiple Tasks</h2><button class="modal-close" onclick="closeModal('timelog-batch-modal')" aria-label="Close">✕</button></div>
     <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap">
