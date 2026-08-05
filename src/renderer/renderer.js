@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS = {
     globalSearch:'Alt+Slash',quickShortcuts:'Alt+K',quickCapture:'Alt+Q',sessionSummary:'Alt+Y',
   },
   notifications:true,autoSync:true,confirmOnDelete:true,dateFormat:'MM/DD/YYYY',
-  googleConnected:false,googleEmail:null,platform:'win32',appVersion:'9.5.1',agingThresholdDays:5,
+  googleConnected:false,googleEmail:null,platform:'win32',appVersion:'9.6.0',agingThresholdDays:5,
 };
 
 let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -147,7 +147,7 @@ function runGlobalSearch(query){const res=document.getElementById('search-result
 
 function handleKey(e){const tag=document.activeElement?.tagName;const isTyping=['INPUT','TEXTAREA','SELECT'].includes(tag)||document.activeElement?.isContentEditable;if(isTyping&&e.key!=='Escape')return;const sc=settings.shortcuts;const combo=buildCombo(e);const map={[sc.newTask]:()=>{if(!modalStack.length)openAddTask();},[sc.goToDashboard]:()=>navWithCheck('dashboard'),[sc.goToTasks]:()=>navWithCheck('tasks'),[sc.goToCalendar]:()=>navWithCheck('calendar'),[sc.goToTeam]:()=>navWithCheck('team'),[sc.goToReports]:()=>navWithCheck('reports'),[sc.goToSettings]:()=>navWithCheck('settings'),[sc.syncDrive]:()=>syncDrive(),[sc.toggleTheme]:()=>toggleTheme(),[sc.focusNav]:()=>document.getElementById('main-nav')?.querySelector('button')?.focus(),[sc.focusMain]:()=>document.getElementById('main-content')?.focus(),[sc.searchTasks]:()=>{navWithCheck('tasks');setTimeout(()=>document.getElementById('search-input')?.focus(),120);},[sc.closeModal]:()=>closeTopModal(),[sc.dailyBriefing]:()=>dailyBriefing(),[sc.focusMode]:()=>toggleFocusMode(),[sc.exportCSV]:()=>exportCSV(),[sc.globalSearch]:()=>toggleGlobalSearch(),[sc.quickShortcuts]:()=>showShortcutsModal()};if(map[combo]){e.preventDefault();map[combo]();return;}if(globalSearchOpen&&e.key==='ArrowDown'){e.preventDefault();document.querySelector('#search-results .search-result-item')?.focus();return;}if(e.altKey&&!e.ctrlKey&&!e.shiftKey&&e.key>='1'&&e.key<='9'){const idx=parseInt(e.key)-1;if(idx<filterPresets.length){e.preventDefault();loadFilterPreset(idx);}}}
 function buildCombo(e){const parts=[];if(e.ctrlKey)parts.push('Ctrl');if(e.altKey)parts.push('Alt');if(e.shiftKey)parts.push('Shift');if(e.metaKey)parts.push('Meta');const key=e.key===','?'Comma':e.key==='/'?'Slash':e.key;if(!['Control','Alt','Shift','Meta'].includes(key))parts.push(key);return parts.join('+');}
-function handleNavAction(a){const m={goToDashboard:()=>navWithCheck('dashboard'),goToTasks:()=>navWithCheck('tasks'),goToCalendar:()=>navWithCheck('calendar'),goToTeam:()=>navWithCheck('team'),goToReports:()=>navWithCheck('reports'),goToSettings:()=>navWithCheck('settings'),newTask:()=>openAddTask(),syncDrive:()=>syncDrive(),toggleTheme:()=>toggleTheme(),focusNav:()=>document.getElementById('main-nav')?.querySelector('button')?.focus(),focusMain:()=>document.getElementById('main-content')?.focus(),showShortcuts:()=>showShortcutsModal(),dailyBriefing:()=>dailyBriefing(),exportCSV:()=>exportCSV(),globalSearch:()=>toggleGlobalSearch(),quickCapture:()=>openQuickCapture()};if(m[a])m[a]();}
+function handleNavAction(a){const m={goToDashboard:()=>navWithCheck('dashboard'),goToTasks:()=>navWithCheck('tasks'),goToCalendar:()=>navWithCheck('calendar'),goToTeam:()=>navWithCheck('team'),goToReports:()=>navWithCheck('reports'),goToSettings:()=>navWithCheck('settings'),newTask:()=>openAddTask(),syncDrive:()=>syncDrive(),toggleTheme:()=>toggleTheme(),focusNav:()=>document.getElementById('main-nav')?.querySelector('button')?.focus(),focusMain:()=>document.getElementById('main-content')?.focus(),showShortcuts:()=>showShortcutsModal(),dailyBriefing:()=>dailyBriefing(),exportCSV:()=>exportCSV(),globalSearch:()=>toggleGlobalSearch(),quickCapture:()=>openQuickCapture(),openFeedback:()=>openFeedbackModal()};if(m[a])m[a]();}
 
 function navWithCheck(view,btn,settingsTab){if(currentView==='settings'&&settingsHasChanges&&view!=='settings'){pendingNavTarget={view,btn,settingsTab};openModalEl('unsaved-modal');return;}nav(view,btn,settingsTab);}
 function discardAndNavigate(){settingsHasChanges=false;pendingSettings={};closeModal('unsaved-modal');if(pendingNavTarget)nav(pendingNavTarget.view,pendingNavTarget.btn,pendingNavTarget.settingsTab);pendingNavTarget=null;}
@@ -281,9 +281,20 @@ function renderWhatsNew(){
   return `<div role="region" aria-label="What's New in VantagePM">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
     <h2 style="font-size:1.15rem;font-weight:800;margin:0">What's New in VantagePM</h2>
-    <span class="badge badge-done">v9.5.1 current</span>
+    <span class="badge badge-done">v9.6.0 current</span>
   </div>
   <p style="font-size:.85rem;color:var(--muted);margin-bottom:24px">Latest features and fixes, most recent first.</p>
+
+  <section class="card" style="margin-bottom:16px">
+    <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.6.0</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">August 2026</span></div>
+    <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem">
+      <li><strong>In-app feedback reporting</strong> — A "Report an Issue" dialog is now available from Settings → About and the Help menu. Users can describe the issue, suggest a solution, select their assistive technology, and rate impact. Submissions go directly to GitHub Issues on the VantagePM repository.</li>
+      <li><strong>Settings combobox rogue announcement fixed</strong> — Changing any dropdown in Settings no longer fires an assertive live region announcement on every keystroke. The save bar's own polite live region still notifies once when unsaved changes are first made.</li>
+      <li><strong>JAWS dialog heading focus</strong> — All modal headings now have <code>tabindex="-1"</code>. When a dialog opens, JAWS focus lands on the heading element rather than the overlay container, causing JAWS to announce the heading text plus "dialog" — providing immediate orientation context.</li>
+      <li><strong>JAWS element-list containment</strong> — Background regions (<code>#app</code>, skip links, focus bar, timer bar) now receive both <code>inert</code> and <code>aria-hidden="true"</code> when a dialog is open. This closes a documented JAWS bypass where element dialogs (Insert+F7 links list, Insert+F8 form fields) could still surface background elements through <code>inert</code> alone.</li>
+      <li><strong>Accessibility tree active before JAWS detection</strong> — <code>app.setAccessibilitySupportEnabled(true)</code> is now called before <code>app.whenReady()</code>, eliminating a startup race where JAWS could initialize before Electron exposed the full accessibility tree.</li>
+    </ul>
+  </section>
 
   <section class="card" style="margin-bottom:16px">
     <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.5.1</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">August 2026</span></div>
@@ -465,15 +476,18 @@ function openModalEl(id){
   el.removeAttribute('hidden');
   modalStack.push(id);
   if(modalStack.length===1){
-    document.getElementById('app').inert=true;
-    document.querySelector('.skip-links')?.setAttribute('inert','');
-    const fb=document.getElementById('focus-bar');if(fb)fb.inert=true;
-    const tb=document.getElementById('timer-bar');if(tb)tb.inert=true;
+    const appEl=document.getElementById('app');
+    if(appEl){appEl.inert=true;appEl.setAttribute('aria-hidden','true');}
+    const sl=document.querySelector('.skip-links');
+    if(sl){sl.setAttribute('inert','');sl.setAttribute('aria-hidden','true');}
+    const fb=document.getElementById('focus-bar');if(fb){fb.inert=true;fb.setAttribute('aria-hidden','true');}
+    const tb=document.getElementById('timer-bar');if(tb){tb.inert=true;tb.setAttribute('aria-hidden','true');}
     const ts=document.getElementById('toast');if(ts)ts.setAttribute('aria-hidden','true');
   }
   const title=el.querySelector('.modal-title')?.textContent||'';
   setTimeout(()=>{
-    el.focus();
+    const heading=el.querySelector('.modal-title[tabindex="-1"]');
+    (heading||el).focus();
     if(title)announce(title+' dialog. Use Tab to navigate controls, Escape to close.');
   },700);
   el.addEventListener('keydown',trapFocus);
@@ -484,10 +498,12 @@ function closeModal(id){
   el.removeEventListener('keydown',trapFocus);
   modalStack=modalStack.filter(m=>m!==id);
   if(!modalStack.length){
-    document.getElementById('app').inert=false;
-    document.querySelector('.skip-links')?.removeAttribute('inert');
-    const fb=document.getElementById('focus-bar');if(fb)fb.inert=false;
-    const tb=document.getElementById('timer-bar');if(tb)tb.inert=false;
+    const appEl=document.getElementById('app');
+    if(appEl){appEl.inert=false;appEl.removeAttribute('aria-hidden');}
+    const sl=document.querySelector('.skip-links');
+    if(sl){sl.removeAttribute('inert');sl.removeAttribute('aria-hidden');}
+    const fb=document.getElementById('focus-bar');if(fb){fb.inert=false;fb.removeAttribute('aria-hidden');}
+    const tb=document.getElementById('timer-bar');if(tb){tb.inert=false;tb.removeAttribute('aria-hidden');}
     const ts=document.getElementById('toast');if(ts)ts.removeAttribute('aria-hidden');
   }
   if(modalFocusReturn&&document.body.contains(modalFocusReturn))modalFocusReturn.focus();
@@ -503,7 +519,7 @@ function renderSettings(){return`<div class="settings-layout"><nav class="settin
 
 function switchSettingsTab(tab){if(settingsHasChanges&&tab!==activeSettingsTab){pendingNavTarget={settingsTab:tab};openModalEl('unsaved-modal');return;}activeSettingsTab=tab;settingsSnapshot=JSON.parse(JSON.stringify(settings));document.querySelectorAll('.settings-nav-btn').forEach(b=>{const a=b.getAttribute('onclick')?.includes(`'${tab}'`);b.classList.toggle('active',a);b.setAttribute('aria-current',a?'true':'false');});const body=document.getElementById('settings-panel-body');if(body)body.innerHTML=renderSettingsTab(tab);updateSaveBar();announce(tab+' settings loaded. Make changes, then press Save Settings at the bottom.');}
 function showSettingsTab(tab){switchSettingsTab(tab);}
-function updateSaveBar(){const bar=document.getElementById('settings-save-bar');if(!bar)return;const lbl=document.getElementById('settings-save-label');if(lbl)lbl.innerHTML=settingsHasChanges?'<span aria-hidden="true">⚠️</span> Unsaved changes — press Save Settings to apply.':'No unsaved changes.';bar.querySelectorAll('.settings-change-btn').forEach(b=>b.disabled=!settingsHasChanges);document.querySelectorAll('.settings-nav-btn').forEach(b=>{const a=b.getAttribute('onclick')?.includes(`'${activeSettingsTab}'`);b.classList.toggle('has-changes',a&&settingsHasChanges);});if(settingsHasChanges)announce('Settings changed. Press Save Settings to apply, or Cancel to revert.');}
+function updateSaveBar(){const bar=document.getElementById('settings-save-bar');if(!bar)return;const lbl=document.getElementById('settings-save-label');if(lbl)lbl.innerHTML=settingsHasChanges?'<span aria-hidden="true">⚠️</span> Unsaved changes — press Save Settings to apply.':'No unsaved changes.';bar.querySelectorAll('.settings-change-btn').forEach(b=>b.disabled=!settingsHasChanges);document.querySelectorAll('.settings-nav-btn').forEach(b=>{const a=b.getAttribute('onclick')?.includes(`'${activeSettingsTab}'`);b.classList.toggle('has-changes',a&&settingsHasChanges);});}
 function setPending(key,value){pendingSettings[key]=value;settings[key]=value;settingsHasChanges=true;applySettings(settings);updateSaveBar();}
 function setPendingShortcuts(sc){pendingSettings.shortcuts=sc;settings.shortcuts=sc;settingsHasChanges=true;updateSaveBar();}
 async function saveSettings(){if(IS_ELECTRON){const updated=await window.electronAPI.saveSettings(pendingSettings);Object.assign(settings,updated);}settingsHasChanges=false;pendingSettings={};settingsSnapshot=JSON.parse(JSON.stringify(settings));updateSaveBar();announce('Settings saved.');toast('Settings saved.','success');logActivity('Settings updated','⚙️');}
@@ -526,6 +542,8 @@ function saveCustomStatus(){const name=document.getElementById('st-name').value.
 function deleteCustomStatus(id){const s=customStatuses.find(s=>s.id===id);customStatuses=customStatuses.filter(s=>s.id!==id);logActivity(`Custom status "${s?.name}" deleted`,'🗑️');const body=document.getElementById('settings-panel-body');if(body)body.innerHTML=renderSettingsTab('statuses');announce(`Status "${s?.name||id}" deleted.`);toast('Status deleted.');}
 function renderNotifications(){return`<div><h2 class="settings-section-title">Notifications</h2>${NOTICE}<div class="settings-row"><div><div class="settings-row-label">Enable Notifications</div></div><div class="settings-row-control">${toggle('notifications',settings.notifications)}</div></div><div class="settings-row"><div><div class="settings-row-label">Overdue Alerts</div></div><div class="settings-row-control">${toggle('notifyOverdue',settings.notifyOverdue!==false)}</div></div><div class="settings-row"><div><div class="settings-row-label">Sync Failure Alerts</div></div><div class="settings-row-control">${toggle('notifySyncFail',settings.notifySyncFail!==false)}</div></div><div class="settings-row"><div><div class="settings-row-label">Test Notification</div><div class="settings-row-desc">Sends a test right now — no Save needed.</div></div><div class="settings-row-control"><button class="btn btn-secondary btn-sm" onclick="testReminder()">Send Test</button></div></div></div>`;}
 function testReminder(){if(IS_ELECTRON)window.electronAPI.sendReminder({title:'VantagePM Test',body:'Notifications are working!'});toast('Test sent.','success');announce('Test notification sent.');}
+function openFeedbackModal(){document.querySelectorAll('input[name="fb-at"]').forEach(c=>c.checked=false);document.getElementById('fb-issue').value='';document.getElementById('fb-solution').value='';document.getElementById('fb-impact').value='';document.getElementById('fb-issue-err').classList.add('hidden');document.getElementById('fb-impact-err').classList.add('hidden');document.getElementById('fb-submit').disabled=false;document.getElementById('fb-submit').textContent='Submit Feedback';openModalEl('feedback-modal');}
+async function submitFeedbackForm(){const issue=document.getElementById('fb-issue').value.trim();const impact=document.getElementById('fb-impact').value;let ok=true;if(!issue){document.getElementById('fb-issue-err').classList.remove('hidden');ok=false;}else document.getElementById('fb-issue-err').classList.add('hidden');if(!impact){document.getElementById('fb-impact-err').classList.remove('hidden');ok=false;}else document.getElementById('fb-impact-err').classList.add('hidden');if(!ok){announce('Please fix the errors above.');return;}const at=[...document.querySelectorAll('input[name="fb-at"]:checked')].map(c=>c.value);const solution=document.getElementById('fb-solution').value.trim();const btn=document.getElementById('fb-submit');btn.disabled=true;btn.textContent='Submitting…';if(IS_ELECTRON){const r=await window.electronAPI.submitFeedback({at,issue,solution,impact});if(r.ok){closeModal('feedback-modal');toast('Thank you — your feedback was submitted.','success');announce('Feedback submitted. Thank you.');}else{btn.disabled=false;btn.textContent='Submit Feedback';toast('Could not submit: '+(r.error||'unknown error'),'error');announce('Submission failed. '+(r.error||'Please try again.'));}}else{btn.disabled=false;btn.textContent='Submit Feedback';toast('Feedback requires the installed app.','error');}}
 function renderAbout(){return`<div class="about-box"><div style="display:flex;justify-content:center;margin-bottom:8px">
         <svg viewBox="0 0 280 72" width="280" height="72" aria-label="VantagePM logo" role="img">
           <rect x="0" y="0" width="280" height="72" rx="10" fill="#0F1E3C"/>
@@ -537,7 +555,7 @@ function renderAbout(){return`<div class="about-box"><div style="display:flex;ju
           <text x="206" y="46" font-family="Georgia,serif" font-size="28" font-weight="400" fill="#2563EB">PM</text>
           <text x="80" y="62" font-family="'Segoe UI',Arial,sans-serif" font-size="8" fill="#60A5FA" letter-spacing="2.5">PROJECT MANAGEMENT</text>
         </svg>
-      </div><div class="about-version">VantagePM ${settings.appVersion||'5.0.0'} · WCAG 2.2 AA</div><div class="about-desc">Project management for digital accessibility professionals. Manage audits, remediation tasks, and team work across any company or client — optimized for JAWS, NVDA, and VoiceOver.</div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px"><button class="btn btn-secondary" onclick="showShortcutsModal()">Shortcuts</button><button class="btn btn-secondary" onclick="nav('onboarding')">Onboarding</button><button class="btn btn-secondary" onclick="dailyBriefing()">Daily Briefing</button><button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button></div><div style="margin-top:24px;font-size:.78rem;color:var(--muted)">© 2026 Blind Institute of Technology · MIT License</div></div>`;}
+      </div><div class="about-version">VantagePM ${settings.appVersion||'5.0.0'} · WCAG 2.2 AA</div><div class="about-desc">Project management for digital accessibility professionals. Manage audits, remediation tasks, and team work across any company or client — optimized for JAWS, NVDA, and VoiceOver.</div><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:20px"><button class="btn btn-secondary" onclick="showShortcutsModal()">Shortcuts</button><button class="btn btn-secondary" onclick="nav('onboarding')">Onboarding</button><button class="btn btn-secondary" onclick="dailyBriefing()">Daily Briefing</button><button class="btn btn-secondary" onclick="exportCSV()">Export CSV</button><button class="btn btn-primary" onclick="openFeedbackModal()" aria-haspopup="dialog">Report an Issue</button></div><div style="margin-top:24px;font-size:.78rem;color:var(--muted)">© 2026 Blind Institute of Technology · MIT License</div></div>`;}
 
 async function signIn(){announce('Opening Google sign-in.');const r=await window.electronAPI.googleSignIn();if(r.error){toast('Error: '+r.error,'error');return;}settings.googleConnected=true;settings.googleEmail=r.email;await saveSetting('googleEmail',r.email);toast('Signed in as '+r.email,'success');announce('Signed in as '+r.email);switchSettingsTab('drive');}
 async function signOut(){const r=await window.electronAPI.googleSignOut();if(r.success){settings.googleConnected=false;settings.googleEmail=null;toast('Signed out.','success');announce('Signed out.');switchSettingsTab('drive');}}

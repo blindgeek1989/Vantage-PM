@@ -459,7 +459,7 @@ tr:hover td{background:var(--surface2)}
 <!-- Task modal -->
 <div id="task-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="tm-title">
   <div class="modal">
-    <div class="modal-hd"><h2 class="modal-title" id="tm-title">Add Task</h2><button class="modal-close" onclick="closeModal('task-modal')" aria-label="Close task dialog">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="tm-title">Add Task</h2><button class="modal-close" onclick="closeModal('task-modal')" aria-label="Close task dialog">✕</button></div>
     <div id="priority-suggestion" class="priority-suggestion hidden" role="status" aria-live="polite"></div>
     <div class="tabs-row" role="tablist" aria-label="Task sections" onkeydown="handleTablistArrows(event)">
       <button class="tab-btn" role="tab" aria-selected="true"  aria-controls="tab-details"      id="tbtn-details"      onclick="switchTab('details')">Details</button>
@@ -526,7 +526,7 @@ tr:hover td{background:var(--surface2)}
 <!-- Project / milestone / member / confirm / folder / shortcuts / briefing modals (same as v4) -->
 <div id="project-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="pm-title">
   <div class="modal" style="max-width:480px">
-    <div class="modal-hd"><h2 class="modal-title" id="pm-title">Add Project</h2><button class="modal-close" onclick="closeModal('project-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="pm-title">Add Project</h2><button class="modal-close" onclick="closeModal('project-modal')" aria-label="Close">✕</button></div>
     <div class="form-group"><label class="form-label" for="p-name">Name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="p-name" type="text" aria-required="true"/></div>
     <div class="form-group"><label class="form-label" for="p-desc">Description</label><textarea class="form-textarea" id="p-desc" style="min-height:60px"></textarea></div>
     <div class="form-group"><label class="form-label" for="p-color">Color</label><select class="form-select" id="p-color"><option value="#1547C8">Blue</option><option value="#0A6B3C">Green</option><option value="#C0250F">Red</option><option value="#7A4700">Orange</option><option value="#5B2D8E">Purple</option></select></div>
@@ -535,7 +535,7 @@ tr:hover td{background:var(--surface2)}
 </div>
 <div id="milestone-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="ml-title">
   <div class="modal" style="max-width:480px">
-    <div class="modal-hd"><h2 class="modal-title" id="ml-title">Add Milestone</h2><button class="modal-close" onclick="closeModal('milestone-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="ml-title">Add Milestone</h2><button class="modal-close" onclick="closeModal('milestone-modal')" aria-label="Close">✕</button></div>
     <div class="form-group"><label class="form-label" for="ml-name">Name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="ml-name" type="text" aria-required="true"/></div>
     <div class="form-group"><label class="form-label" for="ml-date">Date<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="ml-date" type="date" aria-required="true"/></div>
     <div class="form-group"><label class="form-label" for="ml-project">Project</label><select class="form-select" id="ml-project"><option value="">— No project —</option></select></div>
@@ -545,7 +545,7 @@ tr:hover td{background:var(--surface2)}
 </div>
 <div id="status-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="st-title">
   <div class="modal" style="max-width:460px">
-    <div class="modal-hd"><h2 class="modal-title" id="st-title">Add Custom Status</h2><button class="modal-close" onclick="closeModal('status-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="st-title">Add Custom Status</h2><button class="modal-close" onclick="closeModal('status-modal')" aria-label="Close">✕</button></div>
     <div class="form-group"><label class="form-label" for="st-name">Status name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="st-name" type="text" placeholder="e.g. Blocked, In Review…" aria-required="true"/></div>
     <div class="form-group"><label class="form-label" for="st-color">Color</label>
       <select class="form-select" id="st-color">
@@ -559,7 +559,7 @@ tr:hover td{background:var(--surface2)}
 </div>
 <div id="member-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="mm-title">
   <div class="modal">
-    <div class="modal-hd"><h2 class="modal-title" id="mm-title">Add Team Member</h2><button class="modal-close" onclick="closeModal('member-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="mm-title">Add Team Member</h2><button class="modal-close" onclick="closeModal('member-modal')" aria-label="Close">✕</button></div>
     <div class="grid-2">
       <div class="form-group"><label class="form-label" for="m-name">Full name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="m-name" type="text" aria-required="true"/></div>
       <div class="form-group"><label class="form-label" for="m-email">Email<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="m-email" type="email" aria-required="true"/></div>
@@ -572,28 +572,28 @@ tr:hover td{background:var(--surface2)}
 </div>
 <div id="confirm-modal" class="overlay" hidden role="alertdialog" tabindex="-1" aria-labelledby="cf-title" aria-describedby="cf-desc">
   <div class="modal" style="max-width:400px">
-    <div class="modal-hd"><h2 class="modal-title" id="cf-title">Confirm</h2><button class="modal-close" onclick="closeModal('confirm-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="cf-title">Confirm</h2><button class="modal-close" onclick="closeModal('confirm-modal')" aria-label="Close">✕</button></div>
     <p id="cf-desc"></p>
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Cancel</button><button class="btn btn-danger" id="cf-ok">Confirm</button></div>
   </div>
 </div>
 <div id="folder-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="fm-title">
   <div class="modal" style="max-width:480px">
-    <div class="modal-hd"><h2 class="modal-title" id="fm-title">Select Google Drive Folder</h2><button class="modal-close" onclick="closeModal('folder-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="fm-title">Select Google Drive Folder</h2><button class="modal-close" onclick="closeModal('folder-modal')" aria-label="Close">✕</button></div>
     <div id="folder-list-wrap" role="listbox" aria-label="Drive folders" style="max-height:220px;overflow-y:auto;border:2px solid var(--border);border-radius:var(--radius);"><div style="padding:20px;text-align:center;color:var(--muted)">Loading…</div></div>
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('folder-modal')">Cancel</button><button class="btn btn-primary" id="folder-ok" onclick="confirmFolder()" disabled>Select Folder</button></div>
   </div>
 </div>
 <div id="shortcuts-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="sh-title">
   <div class="modal" style="max-width:620px">
-    <div class="modal-hd"><h2 class="modal-title" id="sh-title"><span aria-hidden="true">⌨️</span> Keyboard Shortcuts</h2><button class="modal-close" onclick="closeModal('shortcuts-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="sh-title"><span aria-hidden="true">⌨️</span> Keyboard Shortcuts</h2><button class="modal-close" onclick="closeModal('shortcuts-modal')" aria-label="Close">✕</button></div>
     <div id="shortcuts-list"></div>
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('shortcuts-modal')">Close</button><button class="btn btn-primary" onclick="closeModal('shortcuts-modal');nav('settings');setTimeout(()=>showSettingsTab('shortcuts'),150)">Edit Shortcuts</button></div>
   </div>
 </div>
 <div id="briefing-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="br-title">
   <div class="modal" style="max-width:560px">
-    <div class="modal-hd"><h2 class="modal-title" id="br-title">📢 Daily Briefing</h2><button class="modal-close" onclick="closeModal('briefing-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="br-title">📢 Daily Briefing</h2><button class="modal-close" onclick="closeModal('briefing-modal')" aria-label="Close">✕</button></div>
     <div id="briefing-content" aria-live="polite"></div>
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('briefing-modal')">Close</button><button class="btn btn-primary" onclick="readBriefingAloud()">🔊 Read Again</button></div>
   </div>
@@ -601,7 +601,7 @@ tr:hover td{background:var(--surface2)}
 <!-- Unsaved changes warning modal -->
 <div id="unsaved-modal" class="overlay" hidden role="alertdialog" tabindex="-1" aria-labelledby="uw-title" aria-describedby="uw-desc">
   <div class="modal" style="max-width:400px">
-    <div class="modal-hd"><h2 class="modal-title" id="uw-title">Unsaved Changes</h2><button class="modal-close" onclick="closeModal('unsaved-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="uw-title">Unsaved Changes</h2><button class="modal-close" onclick="closeModal('unsaved-modal')" aria-label="Close">✕</button></div>
     <p id="uw-desc">You have unsaved changes on this settings tab. What would you like to do?</p>
     <div class="modal-ft">
       <button class="btn btn-secondary" onclick="discardAndNavigate()">Discard Changes</button>
@@ -613,7 +613,7 @@ tr:hover td{background:var(--surface2)}
 <!-- Quick capture modal -->
 <div id="qc-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="qc-title">
   <div class="modal qc-modal">
-    <div class="modal-hd"><h2 class="modal-title" id="qc-title">⚡ Quick Capture</h2><button class="modal-close" onclick="closeModal('qc-modal')" aria-label="Close quick capture">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="qc-title">⚡ Quick Capture</h2><button class="modal-close" onclick="closeModal('qc-modal')" aria-label="Close quick capture">✕</button></div>
     <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px">Drop a task fast. You'll assign a project and person before it saves.</p>
     <div class="form-group">
       <label class="form-label" for="qc-name">Task name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
@@ -658,7 +658,7 @@ tr:hover td{background:var(--surface2)}
 <!-- Session summary modal -->
 <div id="session-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="ss-title">
   <div class="modal" style="max-width:580px">
-    <div class="modal-hd"><h2 class="modal-title" id="ss-title"><span aria-hidden="true">📋</span> Session Summary</h2><button class="modal-close" onclick="closeModal('session-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="ss-title"><span aria-hidden="true">📋</span> Session Summary</h2><button class="modal-close" onclick="closeModal('session-modal')" aria-label="Close">✕</button></div>
     <div id="session-content" aria-live="polite"></div>
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('session-modal')">Close</button><button class="btn btn-primary" onclick="readSessionAloud()">🔊 Read Aloud</button></div>
   </div>
@@ -667,7 +667,7 @@ tr:hover td{background:var(--surface2)}
 <!-- Project notes modal -->
 <div id="notes-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="nm-title">
   <div class="modal" style="max-width:580px">
-    <div class="modal-hd"><h2 class="modal-title" id="nm-title"><span aria-hidden="true">📝</span> Project Notes</h2><button class="modal-close" onclick="closeModal('notes-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="nm-title"><span aria-hidden="true">📝</span> Project Notes</h2><button class="modal-close" onclick="closeModal('notes-modal')" aria-label="Close">✕</button></div>
     <div id="notes-project-label" style="font-size:.82rem;color:var(--muted);margin-bottom:14px"></div>
     <div id="notes-list" aria-live="polite" style="max-height:260px;overflow-y:auto;margin-bottom:14px"></div>
     <div class="form-group"><label class="form-label" for="note-author">Your name</label><input class="form-input" id="note-author" type="text" placeholder="Your name"/></div>
@@ -679,7 +679,7 @@ tr:hover td{background:var(--surface2)}
 <!-- Change role modal (lead/manager only) -->
 <div id="change-role-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="cr-title">
   <div class="modal" style="max-width:380px">
-    <div class="modal-hd"><h2 class="modal-title" id="cr-title">Change Role</h2><button class="modal-close" onclick="closeModal('change-role-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="cr-title">Change Role</h2><button class="modal-close" onclick="closeModal('change-role-modal')" aria-label="Close">✕</button></div>
     <p id="cr-member-name" style="font-size:.88rem;font-weight:600;margin-bottom:14px"></p>
     <div class="form-group">
       <label class="form-label" for="cr-role">New role<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
@@ -697,7 +697,7 @@ tr:hover td{background:var(--surface2)}
 <div id="setup-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="sw-title">
   <div class="modal" style="max-width:640px">
     <div class="modal-hd">
-      <h2 class="modal-title" id="sw-title"><span aria-hidden="true">🚀</span> Welcome to VantagePM</h2>
+      <h2 class="modal-title" tabindex="-1" id="sw-title"><span aria-hidden="true">🚀</span> Welcome to VantagePM</h2>
     </div>
     <p style="font-size:.88rem;color:var(--muted);margin-bottom:16px;line-height:1.6">Choose how you'll use VantagePM, select your role, and enter your name to get started.</p>
     <div class="tabs-row" role="tablist" aria-label="Select your mode" onkeydown="handleTablistArrows(event)">
@@ -769,7 +769,7 @@ tr:hover td{background:var(--surface2)}
 <!-- Save filter preset modal -->
 <div id="preset-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="pr-title">
   <div class="modal" style="max-width:400px">
-    <div class="modal-hd"><h2 class="modal-title" id="pr-title">Save Filter Preset</h2><button class="modal-close" onclick="closeModal('preset-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="pr-title">Save Filter Preset</h2><button class="modal-close" onclick="closeModal('preset-modal')" aria-label="Close">✕</button></div>
     <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px">Saves the current status, priority, project, and search filters as a named preset you can reuse.</p>
     <div class="form-group"><label class="form-label" for="preset-name">Preset name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="preset-name" type="text" placeholder="e.g. My High Priority Tasks" aria-required="true" aria-describedby="preset-name-err"/><span class="form-error hidden" id="preset-name-err" role="alert">Please enter a preset name.</span></div>
     <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('preset-modal')">Cancel</button><button class="btn btn-primary" onclick="saveFilterPreset()">Save Preset</button></div>
@@ -778,7 +778,7 @@ tr:hover td{background:var(--surface2)}
 <!-- Batch time log modal -->
 <div id="timelog-batch-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="tlb-title">
   <div class="modal" style="max-width:580px">
-    <div class="modal-hd"><h2 class="modal-title" id="tlb-title">Log Time — Multiple Tasks</h2><button class="modal-close" onclick="closeModal('timelog-batch-modal')" aria-label="Close">✕</button></div>
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="tlb-title">Log Time — Multiple Tasks</h2><button class="modal-close" onclick="closeModal('timelog-batch-modal')" aria-label="Close">✕</button></div>
     <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap">
       <div class="form-group" style="margin:0;flex:1;min-width:140px">
         <label class="form-label" for="tlb-date">Date<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
@@ -796,6 +796,52 @@ tr:hover td{background:var(--surface2)}
       <button class="btn btn-secondary" onclick="closeModal('timelog-batch-modal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveBatchTime()">Save Time Entries</button>
     </div>
+  </div>
+</div>
+
+<!-- Feedback modal -->
+<div id="feedback-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="fb-title">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="fb-title">Report an Issue</h2><button class="modal-close" onclick="closeModal('feedback-modal')" aria-label="Close">✕</button></div>
+    <form onsubmit="event.preventDefault();submitFeedbackForm()">
+      <fieldset style="border:none;padding:0;margin:0 0 16px">
+        <legend class="form-label" style="margin-bottom:8px">Assistive technology you use <span style="font-size:.8rem;color:var(--muted)">(select all that apply)</span></legend>
+        <div style="display:flex;flex-wrap:wrap;gap:8px 20px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="JAWS"/> JAWS</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="NVDA"/> NVDA</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="VoiceOver"/> VoiceOver</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="Narrator"/> Narrator</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="Dragon NaturallySpeaking"/> Dragon</label>
+          <label style="display:flex;align-items:center;gap=6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="ZoomText"/> ZoomText</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="Switch Access"/> Switch Access</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="None"/> None</label>
+        </div>
+      </fieldset>
+      <div class="form-group">
+        <label class="form-label" for="fb-issue">What is the issue?<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <textarea class="form-input" id="fb-issue" rows="4" aria-required="true" placeholder="Describe what went wrong or what doesn't work as expected."></textarea>
+        <span id="fb-issue-err" class="field-err hidden" role="alert">Please describe the issue.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fb-solution">What should the solution be? <span style="font-size:.8rem;color:var(--muted)">(optional)</span></label>
+        <textarea class="form-input" id="fb-solution" rows="3" placeholder="Describe what you'd expect or how you think it could be fixed."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fb-impact">How impactful is this to you?<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <select class="form-select" id="fb-impact" aria-required="true">
+          <option value="">— Select impact —</option>
+          <option value="Critical — the app is unusable for me">Critical — the app is unusable for me</option>
+          <option value="High — significantly affects my workflow">High — significantly affects my workflow</option>
+          <option value="Medium — noticeable but I can work around it">Medium — noticeable but I can work around it</option>
+          <option value="Low — minor inconvenience">Low — minor inconvenience</option>
+        </select>
+        <span id="fb-impact-err" class="field-err hidden" role="alert">Please select an impact level.</span>
+      </div>
+      <div class="modal-ft">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('feedback-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="fb-submit">Submit Feedback</button>
+      </div>
+    </form>
   </div>
 </div>
 

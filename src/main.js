@@ -135,6 +135,7 @@ function buildMenu() {
     ]},
     { label:'&Help', submenu:[
       {label:'Keyboard Shortcuts',         click:()=>send('nav','showShortcuts')},
+      {label:'Report an Issue',            click:()=>send('nav','openFeedback')},
       {label:'Check for Updates',          click:()=>checkForUpdates()},
       {label:'WCAG 2.2 Quick Reference',   click:()=>shell.openExternal('https://www.w3.org/WAI/WCAG22/quickref/')},
       {type:'separator'},
@@ -175,6 +176,55 @@ function getSettings() {
 ipcMain.handle('get-settings',    ()         => getSettings());
 ipcMain.handle('save-settings',   (e,updates)=> { Object.entries(updates).forEach(([k,v])=>store.set(k,v)); buildMenu(); return getSettings(); });
 ipcMain.handle('reset-shortcuts', ()         => { store.set('shortcuts',DEFAULT_SHORTCUTS); buildMenu(); return DEFAULT_SHORTCUTS; });
+
+// Feedback → GitHub Issues
+const FEEDBACK_GITHUB_TOKEN = process.env.GITHUB_FEEDBACK_TOKEN || '';
+const FEEDBACK_REPO = 'blindgeek1989/Vantage-PM';
+ipcMain.handle('submit-feedback', (_, data) => new Promise((resolve) => {
+  if (!FEEDBACK_GITHUB_TOKEN) return resolve({ error: 'Feedback not configured. Set GITHUB_FEEDBACK_TOKEN.' });
+  const atList = (data.at && data.at.length) ? data.at.join(', ') : 'Not specified';
+  const body = [
+    `**Assistive Technology:** ${atList}`,
+    '',
+    '**Issue Description:**',
+    data.issue || '(not provided)',
+    '',
+    '**Suggested Solution:**',
+    data.solution || '(not provided)',
+    '',
+    `**Impact:** ${data.impact || 'Not specified'}`,
+    '',
+    '---',
+    `*Submitted via VantagePM v${app.getVersion()} in-app feedback*`,
+  ].join('\n');
+  const titleText = (data.issue || 'User feedback').replace(/[\r\n]+/g,' ').slice(0, 72);
+  const payload = JSON.stringify({ title: `[Feedback] ${titleText}`, body, labels: ['user-feedback'] });
+  const req = http.request === undefined
+    ? require('https').request
+    : require('https').request;
+  const r = require('https').request({
+    hostname: 'api.github.com',
+    path: `/repos/${FEEDBACK_REPO}/issues`,
+    method: 'POST',
+    headers: {
+      Authorization: `token ${FEEDBACK_GITHUB_TOKEN}`,
+      'Content-Type': 'application/json',
+      'User-Agent': 'VantagePM-Feedback',
+      'Content-Length': Buffer.byteLength(payload),
+      Accept: 'application/vnd.github+json',
+    },
+  }, (res) => {
+    let raw = '';
+    res.on('data', d => raw += d);
+    res.on('end', () => {
+      if (res.statusCode === 201) resolve({ ok: true });
+      else resolve({ error: `GitHub error ${res.statusCode}` });
+    });
+  });
+  r.on('error', e => resolve({ error: e.message }));
+  r.write(payload);
+  r.end();
+}));
 
 // Google auth
 ipcMain.handle('google-sign-in', () => new Promise((resolve) => {
@@ -265,8 +315,9 @@ ipcMain.handle('local-save', async (e, payload) => {
   catch(e) { return { error: e.message }; }
 });
 
+app.setAccessibilitySupportEnabled(true);
 app.commandLine.appendSwitch('force-renderer-accessibility', 'complete');
-app.whenReady().then(() => { app.setAccessibilitySupportEnabled(true); createWindow(); });
+app.whenReady().then(() => { createWindow(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length===0) createWindow(); });
 app.on('window-all-closed', () => { if (process.platform!=='darwin') app.quit(); });
 app.on('will-quit', () => { if (reminderTimer) clearInterval(reminderTimer); });

@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   installUpdate:     ()  => ipcRenderer.invoke('install-update'),
   localLoad:         ()  => ipcRenderer.invoke('local-load'),
   localSave:         (d) => ipcRenderer.invoke('local-save', d),
+  submitFeedback:    (d) => ipcRenderer.invoke('submit-feedback', d),
   sendReminder:      (d) => ipcRenderer.send('send-reminder', d),
   onInitSettings:    (cb) => ipcRenderer.on('init-settings',    (_,d)=>cb(d)),
   onSystemTheme:     (cb) => ipcRenderer.on('system-theme',     (_,d)=>cb(d)),
