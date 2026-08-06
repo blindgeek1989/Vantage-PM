@@ -60,6 +60,7 @@ function createWindow() {
     webPreferences:{
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation:true, nodeIntegration:false,
+      accessibilitySupportEnabled: true,
     },
   });
   win.loadFile(path.join(__dirname, 'renderer', 'index.html'));
