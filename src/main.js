@@ -60,6 +60,7 @@ function createWindow() {
     webPreferences:{
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation:true, nodeIntegration:false,
+      sandbox: false,
       accessibilitySupportEnabled: true,
     },
   });
@@ -316,7 +317,7 @@ ipcMain.handle('local-save', async (e, payload) => {
   catch(e) { return { error: e.message }; }
 });
 
-app.commandLine.appendSwitch('force-renderer-accessibility');
+app.commandLine.appendSwitch('force-renderer-accessibility', 'complete');
 app.whenReady().then(() => { app.setAccessibilitySupportEnabled(true); createWindow(); });
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length===0) createWindow(); });
 app.on('window-all-closed', () => { if (process.platform!=='darwin') app.quit(); });
