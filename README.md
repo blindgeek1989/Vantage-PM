@@ -1,83 +1,58 @@
-# AccessPM — Accessible Project Management Desktop App
+# VantagePM
 
-**WCAG 2.2 Level AA Targeted · Built for the Blind Institute of Technology**
+**WCAG 2.2 Level AA Targeted · Built by Aaron Linson**
 
----
-
-## Overview
-
-AccessPM is a cross-platform Electron desktop application for accessible project management.
-Designed to work seamlessly with **JAWS**, **NVDA**, and **VoiceOver**.
+An accessible project management desktop app for digital accessibility professionals and the teams that work with them. Runs on Windows and macOS. Designed from the ground up to work with JAWS, NVDA, and VoiceOver.
 
 ---
 
-## Prerequisites
+## User Guide
 
-- **Node.js** 18 or newer: https://nodejs.org
-- **npm** (comes with Node.js)
+[Full user documentation](docs/user-guide.md) — covers installation, all features, keyboard shortcuts, and a dedicated screen reader quick-start for JAWS, NVDA, and VoiceOver.
+
+---
+
+## Features
+
+- Task management with filtering, sorting, bulk actions, and recurring tasks
+- Built-in WCAG 2.2 audit tool (78 criteria, Levels A and AA)
+- Project health dashboard, milestones, and calendar view
+- Task timer with 15-minute billing rounding and time logging
+- Google Drive sync for team collaboration
+- Team management with workload tracking and role-based views
+- Full keyboard navigation with customizable shortcuts
+- Light, dark, system, and high-contrast themes
+- Adjustable font size and reduce-motion support
+- Two modes: Digital Accessibility (full feature set) and Project Management (WCAG audit hidden)
 
 ---
 
 ## Installation
 
-```bash
-# 1. Clone or unzip the project
-cd accesspm
+Download the latest installer from the [Releases](../../releases) page and run it.
 
-# 2. Install dependencies
-npm install
+**Important:** Always run the installer before testing. Do not test from the unpacked `dist` folder — behavior may differ.
 
-# 3. Run in development mode
-npm start
-```
+### Prerequisites (development only)
 
----
-
-## Building an Installer
+- Node.js 18 or newer
+- npm (comes with Node.js)
 
 ```bash
-# Windows (.exe NSIS installer)
-npm run build:win
-
-# macOS (.dmg)
-npm run build:mac
-
-# Linux (AppImage, .deb, .rpm)
-npm run build:linux
-
-# All platforms
-npm run build:all
+npm install       # install dependencies
+npm start         # run in development mode
+npm run build:win # build Windows installer
 ```
-
-Installers are output to the `dist/` folder.
 
 ---
 
 ## Google Drive Setup
 
-### Step 1 — Create a Google Cloud Project
-
-1. Go to https://console.cloud.google.com
-2. Create a new project (e.g. "AccessPM")
-3. Enable the **Google Drive API** under APIs & Services → Library
-
-### Step 2 — Create OAuth 2.0 Credentials
-
-1. Go to APIs & Services → Credentials
-2. Click **Create Credentials** → **OAuth 2.0 Client ID**
-3. Application type: **Desktop app**
-4. Name it "AccessPM Desktop"
-5. Under **Authorized redirect URIs**, add: `http://localhost:42813/oauth2callback`
-6. Download the credentials JSON
-
-### Step 3 — Set Environment Variables
-
-**Windows (Command Prompt):**
-```cmd
-set GOOGLE_CLIENT_ID=your_client_id_here
-set GOOGLE_CLIENT_SECRET=your_client_secret_here
-npm start
-```
+1. Go to [console.cloud.google.com](https://console.cloud.google.com) and create a project.
+2. Enable the **Google Drive API** under APIs and Services > Library.
+3. Create OAuth 2.0 credentials — choose **Desktop app** type.
+4. Add `http://localhost:42813/oauth2callback` as an authorized redirect URI.
+5. Set environment variables before running:
 
 **Windows (PowerShell):**
 ```powershell
@@ -93,82 +68,51 @@ export GOOGLE_CLIENT_SECRET="your_client_secret_here"
 npm start
 ```
 
-**For production builds**, embed these via an `.env` file or system-level environment variables set by your IT department.
-
-### Step 4 — Sign In and Choose a Folder
-
-1. Launch AccessPM
-2. Go to **Settings → Google Drive**
-3. Click **Sign in with Google** — your browser will open
-4. Sign in and approve permissions
-5. Return to AccessPM and click **Choose Folder**
-6. Select the folder all team members will share
-
-> **All team members** must point to the **same Google Drive folder**.
-> AccessPM stores data in a single file: `accesspm-data.json`
-
 ---
 
 ## Default Keyboard Shortcuts
 
-| Action               | Shortcut       |
-|----------------------|----------------|
-| New Task             | Alt+N          |
-| Go to Dashboard      | Alt+1          |
-| Go to Tasks          | Alt+2          |
-| Go to Calendar       | Alt+3          |
-| Go to Team           | Alt+4          |
-| Go to Reports        | Alt+5          |
-| Open Settings        | Alt+Comma      |
-| Save Item            | Alt+S          |
-| Close Modal          | Escape         |
-| Search Tasks         | Alt+F          |
-| Sync with Drive      | Alt+R          |
-| Toggle Theme         | Alt+T          |
-| Focus Navigation     | Alt+M          |
-| Focus Main Content   | Alt+C          |
+All shortcuts are customizable in Settings > Shortcuts.
 
-All shortcuts are fully customizable in **Settings → Shortcuts**.
+| Action | Shortcut |
+|--------|----------|
+| New Task | Alt+N |
+| Go to Dashboard | Alt+1 |
+| Go to Tasks | Alt+2 |
+| Go to Calendar | Alt+3 |
+| Go to Team | Alt+4 |
+| Go to Reports | Alt+5 |
+| Open Settings | Alt+Comma |
+| Save Item | Alt+S |
+| Close Modal | Escape |
+| Search Tasks | Alt+F |
+| Sync with Drive | Alt+R |
+| Toggle Theme | Alt+T |
+| Focus Navigation | Alt+M |
+| Focus Main Content | Alt+C |
+| Daily Briefing | Alt+B |
+| Focus Mode | Alt+W |
 
 ---
 
 ## Screen Reader Notes
 
 ### JAWS (Windows)
-- All dialogs use `aria-modal="true"` and `role="dialog"` — JAWS will announce them correctly
-- Live regions (`aria-live="polite"`) announce saves, deletes, and sync status
-- The app menu is keyboard accessible via the standard Windows menu bar (Alt key)
-- Avoid mapping shortcuts to Insert+ combinations which JAWS reserves
+- The main content area uses `role="document"` so virtual cursor navigation works without mode switching
+- All dialogs use `role="dialog"` or `role="alertdialog"` with `aria-modal="true"`
+- Live regions use `aria-live="polite"` for status updates
+- Avoid mapping shortcuts to Insert+ combinations reserved by JAWS
 
 ### NVDA (Windows)
-- NVDA browse mode: press Escape or NVDA+Space to exit before using app shortcuts
-- Tables use proper `scope="col"` headers — NVDA will read them in table navigation mode
-- All sort buttons on tables expose `aria-sort` state
-- Avoid mapping shortcuts to Ctrl+Alt+ combinations which NVDA uses for object navigation
+- Browse mode is active in the main content area by default
+- Tables use `scope="col"` headers and `aria-sort` on sort buttons
+- Press `NVDA+Space` to switch between Browse and Focus mode when needed
+- Announcements appear in the NVDA Speech Viewer (Tools > Speech Viewer)
 
 ### VoiceOver (macOS)
-- Full QuickNav support via standard HTML semantics
-- Landmarks: `role="banner"`, `role="main"`, `role="navigation"`, `role="region"` are all used
-- Status announcements use `role="status"` and `aria-live="polite"`
-
----
-
-## WCAG 2.2 Implementation Notes
-
-| Criterion | Implementation |
-|-----------|---------------|
-| 1.3.1 Info and Relationships | Semantic HTML, ARIA roles, table headers |
-| 1.4.3 Contrast (Minimum) | All text ≥4.5:1 in both light and dark modes |
-| 1.4.11 Non-text Contrast | UI components ≥3:1 against adjacent colors |
-| 2.1.1 Keyboard | All functionality operable by keyboard alone |
-| 2.4.1 Bypass Blocks | Skip links to main content and navigation |
-| 2.4.3 Focus Order | Logical DOM order; focus managed on modal open/close |
-| 2.4.7 Focus Visible | 3px solid focus ring on all interactive elements |
-| 2.4.11 Focus Appearance | Focus indicator meets minimum area/contrast requirements |
-| 3.3.1 Error Identification | Inline error messages linked to fields via aria-describedby |
-| 3.3.2 Labels or Instructions | All inputs have visible labels; required fields marked |
-| 4.1.2 Name, Role, Value | All components expose accessible name, role, and state |
-| 4.1.3 Status Messages | All dynamic updates announced via live regions |
+- Landmarks: `role="navigation"`, `role="document"`, `role="application"` (calendar)
+- Enter the calendar region with `VO+Shift+Down Arrow`, exit with `VO+Shift+Up Arrow`
+- All status announcements use `aria-live="polite"`
 
 ---
 
@@ -177,28 +121,26 @@ All shortcuts are fully customizable in **Settings → Shortcuts**.
 ```
 accesspm/
 ├── src/
-│   ├── main.js          # Electron main process (window, IPC, Google auth, Drive)
-│   ├── preload.js       # Secure contextBridge (IPC whitelist)
+│   ├── main.js           # Electron main process (window, IPC, Google auth, Drive)
+│   ├── preload.js        # contextBridge IPC whitelist
 │   └── renderer/
-│       └── index.html   # Full app UI (all views + settings)
-├── assets/              # App icons (icon.ico, icon.icns, icon.png)
-├── package.json         # Dependencies + electron-builder config
-└── README.md            # This file
+│       ├── index.html    # App shell: HTML structure and CSS
+│       └── renderer.js   # All app JavaScript
+├── assets/               # App icons (icon.ico, icon.icns, icon.png)
+├── docs/
+│   └── user-guide.md     # Full user documentation
+├── audit.py              # Pre-build audit script
+└── package.json          # Dependencies and electron-builder config
 ```
 
 ---
 
-## Adding App Icons
+## Reporting Issues
 
-Place your icon files in the `assets/` folder:
-- `icon.ico` — Windows
-- `icon.icns` — macOS  
-- `icon.png` — Linux (512×512 recommended)
-
-Free icon creation: https://www.icoconverter.com
+Open an issue at [github.com/blindgeek1989/Vantage-PM/issues](https://github.com/blindgeek1989/Vantage-PM/issues).
 
 ---
 
 ## License
 
-MIT · Blind Institute of Technology · 2026
+UNLICENSED · Aaron Linson · 2026
