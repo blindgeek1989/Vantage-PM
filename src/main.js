@@ -3,11 +3,12 @@
  */
 'use strict';
 
-const { app, BrowserWindow, ipcMain, shell, Menu, nativeTheme, Notification } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, Menu, nativeTheme, Notification, safeStorage } = require('electron');
 const path = require('path');
 const fs   = require('fs');
 const http = require('http');
-const url  = require('url');
+const url    = require('url');
+const crypto = require('crypto');
 
 let autoUpdater;
 try { autoUpdater = require('electron-updater').autoUpdater; } catch(e) { autoUpdater = null; }
@@ -23,6 +24,14 @@ const DEFAULT_SHORTCUTS = {
   dailyBriefing:'Alt+B', focusMode:'Alt+W',
 };
 
+const ALLOWED_SETTINGS_KEYS = new Set([
+  'theme','language','fontSize','reduceMotion','highContrast',
+  'driveFolderId','driveFolderName','syncInterval','notifications',
+  'autoSync','confirmOnDelete','dateFormat','reminderLeadDays',
+  'currentUser','shortcuts','hasSeenOnboarding','focusModeUser',
+  'appMode','agingThresholdDays',
+]);
+
 const store = Store ? new Store({
   defaults: {
     theme:'system', language:'en', fontSize:16, reduceMotion:false, highContrast:false,
@@ -33,6 +42,23 @@ const store = Store ? new Store({
   }
 }) : { _d:{}, get(k){return this._d[k];}, set(k,v){this._d[k]=v;}, delete(k){delete this._d[k];} };
 
+function encryptTokens(tokens) {
+  try {
+    if (!safeStorage.isEncryptionAvailable()) return tokens;
+    return { _enc: safeStorage.encryptString(JSON.stringify(tokens)).toString('base64') };
+  } catch { return tokens; }
+}
+function decryptTokens(stored) {
+  if (!stored) return null;
+  if (stored._enc) {
+    try {
+      if (!safeStorage.isEncryptionAvailable()) return null;
+      return JSON.parse(safeStorage.decryptString(Buffer.from(stored._enc, 'base64')));
+    } catch { return null; }
+  }
+  return stored; // legacy plaintext — re-encrypted on next save
+}
+
 let oauth2Client = null;
 function initOAuth() {
   try {
@@ -42,7 +68,7 @@ function initOAuth() {
       process.env.GOOGLE_CLIENT_SECRET || 'YOUR_CLIENT_SECRET',
       'http://localhost:42813/oauth2callback'
     );
-    const saved = store.get('googleTokens');
+    const saved = decryptTokens(store.get('googleTokens'));
     if (saved) oauth2Client.setCredentials(saved);
   } catch(e) { console.warn('googleapis unavailable:', e.message); }
 }
@@ -125,7 +151,7 @@ function buildMenu() {
       {type:'separator'},
       {label:'Toggle Theme', accelerator:sc.toggleTheme, click:()=>send('nav','toggleTheme')},
       {type:'separator'},
-      {role:'reload'},{role:'forceReload'},{role:'toggleDevTools'},
+      ...(!app.isPackaged ? [{role:'reload'},{role:'forceReload'},{role:'toggleDevTools'}] : []),
       {type:'separator'},{role:'resetZoom'},{role:'zoomIn'},{role:'zoomOut'},
       {type:'separator'},{role:'togglefullscreen'},
     ]},
@@ -163,7 +189,7 @@ function getSettings() {
     dateFormat:      store.get('dateFormat')       || 'MM/DD/YYYY',
     reminderLeadDays:store.get('reminderLeadDays') || 1,
     currentUser:     store.get('currentUser')      || '',
-    googleConnected: !!(oauth2Client && store.get('googleTokens')),
+    googleConnected: !!(oauth2Client && decryptTokens(store.get('googleTokens'))),
     googleEmail:     store.get('googleEmail')      || null,
     platform:        process.platform,
     defaultShortcuts: DEFAULT_SHORTCUTS,
@@ -175,7 +201,7 @@ function getSettings() {
 }
 
 ipcMain.handle('get-settings',    ()         => getSettings());
-ipcMain.handle('save-settings',   (e,updates)=> { Object.entries(updates).forEach(([k,v])=>store.set(k,v)); buildMenu(); return getSettings(); });
+ipcMain.handle('save-settings',   (e,updates)=> { Object.entries(updates).forEach(([k,v])=>{ if(ALLOWED_SETTINGS_KEYS.has(k)) store.set(k,v); }); buildMenu(); return getSettings(); });
 ipcMain.handle('reset-shortcuts', ()         => { store.set('shortcuts',DEFAULT_SHORTCUTS); buildMenu(); return DEFAULT_SHORTCUTS; });
 
 // Feedback → GitHub Issues
@@ -230,20 +256,28 @@ ipcMain.handle('submit-feedback', (_, data) => new Promise((resolve) => {
 // Google auth
 ipcMain.handle('google-sign-in', () => new Promise((resolve) => {
   if (!oauth2Client) return resolve({ error:'Run: npm install googleapis' });
+  const state = crypto.randomBytes(16).toString('hex');
   const authUrl = oauth2Client.generateAuthUrl({
     access_type:'offline', prompt:'consent',
     scope:['https://www.googleapis.com/auth/drive.file','https://www.googleapis.com/auth/userinfo.email','https://www.googleapis.com/auth/userinfo.profile'],
+    state,
   });
   let server = http.createServer(async (req, res) => {
     const parsed = url.parse(req.url, true);
     if (parsed.pathname !== '/oauth2callback') return;
+    if (parsed.query.state !== state) {
+      res.writeHead(400, {'Content-Type':'text/html'});
+      res.end('<html><body>Invalid state parameter. Please try signing in again.</body></html>');
+      server.close();
+      return resolve({ error: 'OAuth state mismatch.' });
+    }
     res.writeHead(200,{'Content-Type':'text/html'});
     res.end(`<html><body style="font-family:sans-serif;padding:40px;background:#0D1117;color:#E6EAF8"><h1 style="color:#5B8DEF">VantagePM — Sign-in complete!</h1><p>You can close this tab and return to VantagePM.</p></body></html>`);
     server.close();
     try {
       const { tokens } = await oauth2Client.getToken(parsed.query.code);
       oauth2Client.setCredentials(tokens);
-      store.set('googleTokens', tokens);
+      store.set('googleTokens', encryptTokens(tokens));
       const { google } = require('googleapis');
       const info = await google.oauth2({version:'v2',auth:oauth2Client}).userinfo.get();
       store.set('googleEmail', info.data.email);

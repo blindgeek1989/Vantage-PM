@@ -850,12 +850,23 @@ If you installed an update but the app still shows an older version, try the fol
 
 ### Getting Help
 
-For support, accessibility feedback, or to report a bug, contact Aaron Linson. When reporting an issue, include:
+If you find a bug or accessibility issue, please open a GitHub issue. This is the fastest way to get a response and lets other users see known issues.
 
-- The version number (found in Settings > About)
-- Your operating system and version
-- Your screen reader name and version
-- A description of what you expected to happen and what happened instead
+**How to open a GitHub issue:**
+
+1. Go to **github.com/blindgeek1989/Vantage-PM/issues** in your browser.
+2. Select "New issue."
+3. Give the issue a short, descriptive title (for example, "NVDA does not announce task status change").
+4. In the body, include:
+   - The VantagePM version number (found in Settings > About)
+   - Your operating system and version
+   - Your screen reader name and version, if applicable
+   - A description of what you expected to happen and what happened instead
+5. Select "Submit new issue."
+
+You do not need a GitHub account to view existing issues. To submit a new issue, a free GitHub account is required.
+
+You can also use the in-app "Report an Issue" dialog, available from the Help menu or Settings > About. Note that in-app submissions go to the same public GitHub repository — do not include personal information such as your name, email address, or client details.
 
 ---
 
