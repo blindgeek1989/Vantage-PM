@@ -4,7 +4,13 @@
       "Bash(python audit.py)",
       "PowerShell(Start-Process \"C:\\\\a11y project\\\\accesspm\\\\dist\\\\VantagePM Setup 7.0.0.exe\")",
       "PowerShell(Start-Process \"C:\\\\a11y project\\\\accesspm\\\\dist\\\\VantagePM Setup 8.1.0.exe\")",
-      "Bash(Start-Process *)"
+      "Bash(Start-Process *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)",
+      "Bash(git rebase *)",
+      "Bash(GIT_EDITOR=true git rebase --continue)",
+      "Bash(EDITOR=\"echo\" git rebase --continue)",
+      "Bash(git commit *)"
     ]
   }
 }
