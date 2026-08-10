@@ -1,12 +1,12 @@
-# AccessPM — Accessible Project Management Desktop App
+# Vantage PM — Accessible Project Management Desktop App
 
-**WCAG 2.2 Level AA Targeted · Built for the Blind Institute of Technology**
+**WCAG 2.2 Level AA Targeted · Built for people in project management**
 
 ---
 
 ## Overview
 
-AccessPM is a cross-platform Electron desktop application for accessible project management.
+Vantage PM is a cross-platform Electron desktop application for accessible project management.
 Designed to work seamlessly with **JAWS**, **NVDA**, and **VoiceOver**.
 
 ---
@@ -195,10 +195,4 @@ Place your icon files in the `assets/` folder:
 - `icon.icns` — macOS  
 - `icon.png` — Linux (512×512 recommended)
 
-Free icon creation: https://www.icoconverter.com
-
----
-
-## License
-
-MIT · Blind Institute of Technology · 2026
+Free icon creation: https://www.icoconverter.com    
