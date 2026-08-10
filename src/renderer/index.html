@@ -804,6 +804,7 @@ tr:hover td{background:var(--surface2)}
 <div id="feedback-modal" class="overlay" hidden role="dialog" tabindex="-1" aria-labelledby="fb-title">
   <div class="modal" style="max-width:560px">
     <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="fb-title">Report an Issue</h2><button class="modal-close" onclick="closeModal('feedback-modal')" aria-label="Close">✕</button></div>
+    <p style="font-size:.82rem;color:var(--muted);background:var(--warn-bg);border:1px solid var(--warn);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px" role="note">Submissions are posted as public issues on the VantagePM GitHub repository. Do not include personal information such as your name, email address, or client details.</p>
     <form onsubmit="event.preventDefault();submitFeedbackForm()">
       <fieldset style="border:none;padding:0;margin:0 0 16px">
         <legend class="form-label" style="margin-bottom:8px">Assistive technology you use <span style="font-size:.8rem;color:var(--muted)">(select all that apply)</span></legend>
