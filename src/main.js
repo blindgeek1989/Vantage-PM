@@ -194,9 +194,10 @@ function getSettings() {
     platform:        process.platform,
     defaultShortcuts: DEFAULT_SHORTCUTS,
     appVersion:      app.getVersion(),
-    hasSeenOnboarding: store.get('hasSeenOnboarding') || false,
-    focusModeUser:     store.get('focusModeUser')     || '',
-    appMode:           store.get('appMode')           || '',
+    hasSeenOnboarding:  store.get('hasSeenOnboarding')    || false,
+    focusModeUser:      store.get('focusModeUser')        || '',
+    appMode:            store.get('appMode')              || '',
+    agingThresholdDays: store.get('agingThresholdDays')   || 5,
   };
 }
 

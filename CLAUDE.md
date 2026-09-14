@@ -137,6 +137,12 @@ print(f"\nVERDICT: {'PASS - safe to build' if all_ok else 'FAIL - fix before bui
 
 | Version | Key changes |
 |---------|-------------|
+| v9.8.0  | Streamlined nav (More toggle), contextual action slot, Actions overflow menu, redesigned dashboard, collapsible task modal sections, ARIA toolbar preset bar, agingThresholdDays persistence fix, attachment javascript: URI blocked |
+| v9.7.1  | Electron security hardening (removed sandbox:false), JAWS aria-busy race fix, force-renderer-accessibility restored |
+| v9.6.0  | In-app feedback to GitHub Issues, settings combobox announcement fix, JAWS dialog heading focus, JAWS element-list inert+aria-hidden, accessibility tree enabled before JAWS detection |
+| v9.5.1  | JAWS dialog focus pattern (overlay tabindex=-1), virtual cursor containment, 700ms focus timeout, setup modal 500ms delay, onboarding mode selector redesign, focus trap fixed for fixed-position overlays |
+| v9.5.0  | Screen reader navigation overhaul (main content before sidebar), inert on background elements, phantom iframe removed, tablist arrow-key nav, skip-to-nav link |
+| v9.4.0  | Two-mode welcome wizard (Digital Accessibility / Project Management), PM mode hides WCAG audit, JAWS virtual cursor fix (role=document on main content), settings persistence fix |
 | v5.0.0  | Settings Save/Cancel, task templates, custom statuses, bulk actions, color labels, onboarding |
 | v5.1    | Theme switching fix, onboarding copy updated to be organization-agnostic |
 | v6.0.0  | Task timer with 15-min billing rounding, quick capture, natural language due dates |
