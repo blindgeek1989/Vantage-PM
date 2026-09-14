@@ -207,7 +207,11 @@ ipcMain.handle('reset-shortcuts', ()         => { store.set('shortcuts',DEFAULT_
 // Feedback → GitHub Issues
 const FEEDBACK_GITHUB_TOKEN = process.env.GITHUB_FEEDBACK_TOKEN || '';
 const FEEDBACK_REPO = 'blindgeek1989/Vantage-PM';
+let lastFeedbackTime = 0;
 ipcMain.handle('submit-feedback', (_, data) => new Promise((resolve) => {
+  const now = Date.now();
+  if (now - lastFeedbackTime < 60000) return resolve({ error: 'Please wait a moment before submitting again.' });
+  lastFeedbackTime = now;
   if (!FEEDBACK_GITHUB_TOKEN) return resolve({ error: 'Feedback not configured. Set GITHUB_FEEDBACK_TOKEN.' });
   const atList = (data.at && data.at.length) ? data.at.join(', ') : 'Not specified';
   const body = [
@@ -226,9 +230,6 @@ ipcMain.handle('submit-feedback', (_, data) => new Promise((resolve) => {
   ].join('\n');
   const titleText = (data.issue || 'User feedback').replace(/[\r\n]+/g,' ').slice(0, 72);
   const payload = JSON.stringify({ title: `[Feedback] ${titleText}`, body, labels: ['user-feedback'] });
-  const req = http.request === undefined
-    ? require('https').request
-    : require('https').request;
   const r = require('https').request({
     hostname: 'api.github.com',
     path: `/repos/${FEEDBACK_REPO}/issues`,
@@ -297,7 +298,7 @@ ipcMain.handle('google-sign-out', async () => {
 
 // Drive
 ipcMain.handle('drive-list-folders', async () => {
-  if (!oauth2Client || !store.get('googleTokens')) return { error:'Not signed in.' };
+  if (!oauth2Client || !decryptTokens(store.get('googleTokens'))) return { error:'Not signed in.' };
   try {
     const { google } = require('googleapis');
     const drive = google.drive({version:'v3',auth:oauth2Client});
@@ -308,7 +309,7 @@ ipcMain.handle('drive-list-folders', async () => {
 
 ipcMain.handle('drive-read', async () => {
   const folderId = store.get('driveFolderId');
-  if (!folderId || !oauth2Client || !store.get('googleTokens')) return { data:null };
+  if (!folderId || !oauth2Client || !decryptTokens(store.get('googleTokens'))) return { data:null };
   try {
     const { google } = require('googleapis');
     const drive = google.drive({version:'v3',auth:oauth2Client});
@@ -321,7 +322,7 @@ ipcMain.handle('drive-read', async () => {
 
 ipcMain.handle('drive-write', async (e, payload) => {
   const folderId = store.get('driveFolderId');
-  if (!folderId || !oauth2Client || !store.get('googleTokens')) return { error:'Not configured.' };
+  if (!folderId || !oauth2Client || !decryptTokens(store.get('googleTokens'))) return { error:'Not configured.' };
   try {
     const { google } = require('googleapis');
     const { Readable } = require('stream');
@@ -341,13 +342,24 @@ ipcMain.handle('local-load', async () => {
   const filePath = path.join(app.getPath('userData'), 'vantagepm-data.json');
   try {
     if (!fs.existsSync(filePath)) return { data: null };
-    return { data: JSON.parse(fs.readFileSync(filePath, 'utf8')) };
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (parsed._enc) {
+      if (!safeStorage.isEncryptionAvailable()) return { data: null };
+      return { data: JSON.parse(safeStorage.decryptString(Buffer.from(parsed._enc, 'base64'))) };
+    }
+    return { data: parsed }; // legacy plaintext — re-encrypted on next save
   } catch(e) { return { data: null }; }
 });
 ipcMain.handle('local-save', async (e, payload) => {
   const filePath = path.join(app.getPath('userData'), 'vantagepm-data.json');
-  try { fs.writeFileSync(filePath, JSON.stringify(payload, null, 2), 'utf8'); return { success: true }; }
-  catch(e) { return { error: e.message }; }
+  try {
+    const content = safeStorage.isEncryptionAvailable()
+      ? JSON.stringify({ _enc: safeStorage.encryptString(JSON.stringify(payload)).toString('base64') })
+      : JSON.stringify(payload, null, 2);
+    fs.writeFileSync(filePath, content, 'utf8');
+    return { success: true };
+  } catch(e) { return { error: e.message }; }
 });
 
 app.commandLine.appendSwitch('force-renderer-accessibility', 'complete');
