@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' https:"/>
+<title>VantagePM</title>
+<style>
+:root{
+  --font:'Segoe UI','Helvetica Neue',Arial,sans-serif;
+  --bg:#F4F6FB;--surface:#FFF;--surface2:#EDF0F7;--border:#C2C8D8;
+  --text:#1A1F36;--muted:#4A5278;--accent:#1547C8;--accent-fg:#FFF;
+  --accent-h:#0F35A0;--danger:#C0250F;--success:#0A6B3C;
+  --warn:#7A4700;--warn-bg:#FFF3CC;--focus:#1547C8;--radius:8px;--sidebar:240px;
+  --shadow:0 2px 8px rgba(26,31,54,.10);--shadow-lg:0 6px 24px rgba(26,31,54,.14);--fs:16px;
+}
+[data-theme=dark]{
+  --bg:#0D1117;--surface:#161B27;--surface2:#1E2536;--border:#2E3652;
+  --text:#E6EAF8;--muted:#8892B0;--accent:#5B8DEF;--accent-fg:#0D1117;
+  --accent-h:#7AAAF5;--danger:#FF7B72;--success:#3FB97A;--warn:#E3A740;--warn-bg:#2A2000;
+  --focus:#5B8DEF;--shadow:0 2px 8px rgba(0,0,0,.4);--shadow-lg:0 6px 24px rgba(0,0,0,.6);
+}
+[data-contrast]{--bg:#000;--surface:#000;--surface2:#111;--border:#FFF;--text:#FFF;--muted:#FFD700;--accent:#FFD700;--accent-fg:#000;--danger:#FF6B6B;--success:#00FF7F;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:var(--fs);scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;flex-direction:column;min-height:100vh}
+[data-reduce-motion] *{transition:none!important;animation:none!important}
+.skip-links{position:absolute;top:0;left:0;z-index:9999;display:flex;gap:4px;padding:4px}
+.skip-link{background:var(--accent);color:var(--accent-fg);padding:8px 16px;border-radius:4px;font-size:.9rem;font-weight:600;text-decoration:none;transform:translateY(-200%);transition:transform .15s}
+.skip-link:focus{transform:translateY(0)}
+:focus-visible{outline:3px solid var(--focus);outline-offset:3px;border-radius:4px}
+:focus:not(:focus-visible){outline:none}
+#app{display:flex;flex:1}
+#sidebar{width:var(--sidebar);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100;overflow-y:auto}
+.sb-header{padding:18px 16px 12px;border-bottom:1px solid var(--border)}
+.logo{font-size:1.2rem;font-weight:800;color:var(--accent);letter-spacing:-.5px}
+.tagline{font-size:.68rem;color:var(--muted);margin-top:2px}
+.sb-footer{border-top:1px solid var(--border);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.nav-section{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);padding:10px 16px 3px}
+.nav-btn{display:flex;align-items:center;gap:9px;width:100%;padding:9px 16px;background:none;border:none;color:var(--text);font-size:.88rem;font-family:var(--font);cursor:pointer;text-align:left;transition:background .12s}
+.nav-btn:hover{background:var(--surface2)}
+.nav-btn[aria-current=page]{background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);font-weight:700;border-left:3px solid var(--accent);padding-left:13px}
+.nav-icon{width:20px;text-align:center;flex-shrink:0}
+.sync-status{font-size:.72rem;color:var(--muted);padding:4px 16px;min-height:18px}
+#topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 26px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50;margin-left:var(--sidebar)}
+h1.page-title{font-size:1.1rem;font-weight:700}
+.topbar-right{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+#main{margin-left:var(--sidebar);flex:1;display:flex;flex-direction:column}
+.content{padding:26px;flex:1}
+.breadcrumb{background:var(--surface2);border-bottom:1px solid var(--border);padding:6px 26px;font-size:.8rem;color:var(--muted);margin-left:var(--sidebar);display:flex;align-items:center;gap:6px}
+.breadcrumb-sep{color:var(--border)}
+.breadcrumb-current{color:var(--text);font-weight:600}
+.search-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 26px;margin-left:var(--sidebar);display:flex;align-items:center;gap:10px}
+.search-bar[hidden]{display:none}
+.search-results{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);z-index:200;max-height:360px;overflow-y:auto}
+.search-result-item{padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center}
+.search-result-item:last-child{border-bottom:none}
+.search-result-item:hover,.search-result-item:focus{background:var(--surface2);outline:none}
+.search-result-type{font-size:.7rem;font-weight:700;text-transform:uppercase;color:var(--muted);width:60px;flex-shrink:0}
+.search-result-name{font-weight:600;font-size:.88rem;flex:1}
+.search-result-meta{font-size:.76rem;color:var(--muted)}
+.search-wrap{position:relative;flex:1;max-width:500px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius);font-size:.88rem;font-family:var(--font);font-weight:600;cursor:pointer;border:2px solid transparent;transition:background .12s,border-color .12s;white-space:nowrap}
+.btn-primary{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-h);border-color:var(--accent-h)}
+.btn-secondary{background:var(--surface);color:var(--text);border-color:var(--border)}
+.btn-secondary:hover{background:var(--surface2)}
+.btn-danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn-success{background:var(--success);color:#fff;border-color:var(--success)}
+.btn-sm{padding:5px 11px;font-size:.8rem}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:700}
+.badge-todo{background:#E8EEFF;color:#1547C8}
+.badge-ip{background:var(--warn-bg);color:var(--warn)}
+.badge-done{background:#D4F4E2;color:#0A6B3C}
+.badge-high{background:#FFE0DD;color:#7A1A0F}
+.badge-medium{background:var(--warn-bg);color:var(--warn)}
+.badge-low{background:var(--surface2);color:var(--muted)}
+.badge-pass{background:#D4F4E2;color:#0A6B3C}
+.badge-fail{background:#FFE0DD;color:#7A1A0F}
+.badge-na{background:var(--surface2);color:var(--muted)}
+.badge-review{background:var(--warn-bg);color:var(--warn)}
+[data-theme=dark] .badge-todo{background:#1E2D5A;color:#8ABAFF}
+[data-theme=dark] .badge-done{background:#0B2D1C;color:#3FB97A}
+.form-group{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.form-label{font-size:.86rem;font-weight:600}
+.req{color:var(--danger);margin-left:3px}
+.form-input,.form-select,.form-textarea{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);color:var(--text);font-family:var(--font);font-size:.9rem;padding:8px 11px;width:100%;transition:border-color .12s}
+.form-input:hover,.form-select:hover,.form-textarea:hover{border-color:var(--accent)}
+.form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);outline:3px solid var(--focus);outline-offset:2px}
+.form-textarea{resize:vertical;min-height:80px}
+.form-hint{font-size:.76rem;color:var(--muted)}
+.form-error{font-size:.76rem;color:var(--danger);font-weight:600}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tbl-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;background:var(--surface)}
+th{background:var(--surface2);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 13px;text-align:left;border-bottom:2px solid var(--border)}
+th button{background:none;border:none;color:inherit;font:inherit;cursor:pointer;display:flex;align-items:center;gap:4px;width:100%}
+td{padding:11px 13px;font-size:.88rem;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface2)}
+.act-btns{display:flex;gap:6px;flex-wrap:wrap}
+.prog-wrap{background:var(--surface2);border-radius:4px;height:7px;overflow:hidden}
+.prog-bar{height:100%;border-radius:4px;background:var(--accent);transition:width .3s}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin-bottom:22px}
+.stat-card{text-align:center;padding:16px}
+.stat-num{font-size:2rem;font-weight:800;color:var(--accent);line-height:1}
+.stat-lbl{font-size:.72rem;color:var(--muted);margin-top:4px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.overlay[hidden]{display:none}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow-lg);width:100%;max-width:680px;max-height:92vh;overflow-y:auto;padding:26px}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.modal-title{font-size:1.05rem;font-weight:700}
+.modal-close{background:none;border:2px solid var(--border);border-radius:6px;color:var(--text);cursor:pointer;font-size:1rem;padding:3px 9px;line-height:1}
+.modal-close:hover{background:var(--surface2)}
+.modal-ft{display:flex;gap:9px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.tabs-row{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:18px;overflow-x:auto}
+.tab-btn{padding:8px 14px;background:none;border:none;border-bottom:3px solid transparent;color:var(--muted);font-size:.85rem;font-family:var(--font);font-weight:600;cursor:pointer;margin-bottom:-2px;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-hdr{text-align:center;font-size:.72rem;font-weight:700;color:var(--muted);padding:5px;text-transform:uppercase}
+.cal-day{min-height:68px;padding:5px;border-radius:5px;border:1px solid var(--border);background:var(--surface);font-size:.78rem;cursor:pointer}
+.cal-day:hover,.cal-day:focus{background:var(--surface2);outline:3px solid var(--focus)}
+.cal-day.today{border-color:var(--accent);border-width:2px}
+.cal-day.other{opacity:.35}
+.cal-day.milestone{border-color:var(--warn);background:var(--warn-bg)}
+.cal-dn{font-weight:700;margin-bottom:2px}
+.cal-day.today .cal-dn{color:var(--accent)}
+.cal-ev{background:var(--accent);color:var(--accent-fg);border-radius:3px;padding:1px 4px;font-size:.65rem;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-milestone{background:var(--warn);color:#fff;border-radius:3px;padding:1px 4px;font-size:.65rem;margin-top:2px}
+.cal-nav{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.cal-month-lbl{font-size:1rem;font-weight:700;flex:1}
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.m-card{display:flex;flex-direction:column;gap:10px}
+.m-top{display:flex;align-items:center;gap:11px}
+.m-avatar{width:52px;height:52px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;flex-shrink:0}
+.m-name{font-weight:700;font-size:.92rem}
+.m-role,.m-dept{font-size:.76rem;color:var(--muted)}
+.m-email{font-size:.78rem;color:var(--accent);margin-top:3px;word-break:break-all}
+.avail-bar{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden;margin-top:4px}
+.avail-fill{height:100%;border-radius:4px}
+.rep-row{display:flex;align-items:center;gap:11px;margin-bottom:12px}
+.rep-lbl{width:130px;font-size:.83rem;font-weight:600;flex-shrink:0}
+.rep-bar{flex:1}
+.rep-pct{width:40px;text-align:right;font-size:.83rem;font-weight:700;color:var(--accent)}
+.section-h{font-size:.95rem;font-weight:700;margin-bottom:12px;padding-bottom:7px;border-bottom:2px solid var(--border)}
+.filters{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:16px;align-items:center}
+.mt-16{margin-top:16px}
+/* Activity log */
+.activity-list{list-style:none;padding:0;margin:0}
+.activity-entry{display:grid;grid-template-columns:28px 1fr;gap:0 12px;padding:12px 0;border-bottom:1px solid var(--border);align-items:start}
+.activity-entry:last-child{border-bottom:none}
+.activity-entry:focus{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+.activity-icon{font-size:1rem;width:28px;height:28px;display:flex;align-items:center;justify-content:center;background:var(--surface2);border-radius:50%;flex-shrink:0}
+.activity-time{font-size:.78rem;font-weight:700;color:var(--accent);display:block;margin-bottom:2px}
+.activity-text{font-size:.88rem;color:var(--text);line-height:1.5;word-break:break-word}
+/* Focus mode bar */
+.focus-mode-bar{background:var(--accent);color:var(--accent-fg);padding:8px 20px;display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:.88rem;font-weight:600;margin-left:var(--sidebar)}
+.focus-mode-bar[hidden]{display:none}
+/* ── VantagePM v7 ── */
+.health-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.health-card{display:flex;flex-direction:column;gap:12px}
+.health-indicator{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:20px;font-size:.75rem;font-weight:700}
+.health-healthy{background:#D4F4E2;color:#0A6B3C}
+.health-risk{background:var(--warn-bg);color:var(--warn)}
+.health-critical{background:#FFE0DD;color:#7A1A0F}
+[data-theme=dark] .health-healthy{background:#0B2D1C;color:#3FB97A}
+[data-theme=dark] .health-risk{background:#2A2000;color:#E3A740}
+[data-theme=dark] .health-critical{background:#2D0A0A;color:#FF7B72}
+.health-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.health-stat{text-align:center;padding:8px;background:var(--surface2);border-radius:6px}
+.health-stat-num{font-size:1.4rem;font-weight:800;line-height:1}
+.health-stat-lbl{font-size:.68rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+.badge-aging{background:#FFF0E0;color:#7A3A00;border:1px solid #F59E0B}
+[data-theme=dark] .badge-aging{background:#2D1800;color:#FBB040}
+.notes-entry{padding:10px 0;border-bottom:1px solid var(--border)}
+.notes-entry:last-child{border-bottom:none}
+.notes-entry:focus{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+.note-author{font-size:.78rem;font-weight:700;color:var(--accent)}
+.note-time{font-size:.72rem;color:var(--muted);margin-left:8px}
+.note-text{font-size:.88rem;margin-top:4px;line-height:1.5;word-break:break-word}
+.workload-warn{background:color-mix(in srgb,var(--warn) 10%,var(--surface));border:1px solid var(--warn);border-radius:var(--radius);padding:8px 12px;font-size:.82rem;color:var(--warn);margin-top:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.time-sum-tbl{width:100%;border-collapse:collapse}
+.time-sum-tbl th{background:var(--surface2);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:8px 12px;text-align:left;border-bottom:2px solid var(--border)}
+.time-sum-tbl td{padding:9px 12px;font-size:.88rem;border-bottom:1px solid var(--border)}
+.time-sum-tbl tr:last-child td{border-bottom:none}
+.time-sum-tbl .total-row td{font-weight:700;background:var(--surface2)}
+.session-item{padding:10px 0;border-bottom:1px solid var(--border);font-size:.88rem;line-height:1.6}
+.session-item:last-child{border-bottom:none}
+.session-item:focus{outline:3px solid var(--focus);outline-offset:2px;border-radius:4px}
+.sr-conflict-warn{font-size:.76rem;color:var(--danger);line-height:1.4;margin-top:3px}
+/* Timer bar */
+.timer-bar{background:var(--success);color:#fff;padding:8px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:.88rem;font-weight:600;margin-left:var(--sidebar);flex-wrap:wrap}
+.timer-bar[hidden]{display:none}
+.timer-display{font-family:monospace;font-size:1.1rem;font-weight:700;letter-spacing:2px;min-width:80px}
+.timer-task-name{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:320px}
+.timer-rounded{font-size:.8rem;opacity:.85;margin-left:4px}
+/* Quick capture */
+.qc-modal{max-width:420px}
+/* Natural language date hint */
+.date-hint{font-size:.76rem;color:var(--success);font-weight:600;margin-top:3px;min-height:18px}
+/* Today widget */
+.today-widget{background:color-mix(in srgb,var(--accent) 8%,var(--surface));border:2px solid var(--accent);border-radius:var(--radius);padding:16px;margin-bottom:20px}
+.today-task-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.today-task-item:last-child{border-bottom:none}
+/* Project chip */
+.project-chip{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:700;background:var(--surface2);border:1px solid currentColor}
+/* Color label dot */
+.color-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0}
+/* Bulk select */
+.bulk-bar{background:var(--accent);color:var(--accent-fg);padding:10px 16px;display:flex;align-items:center;gap:12px;border-radius:var(--radius);margin-bottom:14px;flex-wrap:wrap}
+.bulk-bar[hidden]{display:none}
+/* Task template chip */
+.template-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:var(--radius);background:var(--surface2);border:1px solid var(--border);font-size:.82rem;cursor:pointer;transition:background .12s}
+.template-chip:hover{background:var(--surface);border-color:var(--accent)}
+/* Priority suggestion */
+.priority-suggestion{background:var(--warn-bg);border:1px solid var(--warn);border-radius:var(--radius);padding:8px 12px;font-size:.82rem;color:var(--warn);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+/* WCAG Audit */
+.audit-criterion{padding:12px 0;border-bottom:1px solid var(--border)}
+.audit-criterion:last-child{border-bottom:none}
+.audit-crit-header{display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.audit-crit-id{font-size:.78rem;font-weight:700;color:var(--accent);min-width:50px}
+.audit-crit-name{font-weight:600;font-size:.88rem;flex:1}
+.audit-crit-level{font-size:.72rem;background:var(--surface2);color:var(--muted);padding:1px 6px;border-radius:10px}
+.audit-crit-desc{font-size:.78rem;color:var(--muted);margin-bottom:8px;line-height:1.5}
+.audit-controls{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.audit-status-btn{padding:4px 10px;border-radius:4px;border:2px solid var(--border);background:var(--surface);font-size:.76rem;font-weight:700;cursor:pointer;font-family:var(--font)}
+.audit-status-btn:hover{background:var(--surface2)}
+.audit-status-btn.active-pass{background:var(--success);color:#fff;border-color:var(--success)}
+.audit-status-btn.active-fail{background:var(--danger);color:#fff;border-color:var(--danger)}
+.audit-status-btn.active-na{background:var(--muted);color:#fff;border-color:var(--muted)}
+.audit-status-btn.active-review{background:var(--warn);color:#fff;border-color:var(--warn)}
+.audit-note-input{flex:1;min-width:160px;font-size:.78rem;padding:4px 8px;border:1px solid var(--border);border-radius:4px;background:var(--surface);color:var(--text);font-family:var(--font)}
+.audit-note-input:focus{border-color:var(--accent);outline:2px solid var(--focus);outline-offset:1px}
+.audit-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:10px;margin-bottom:18px}
+.audit-summary-card{text-align:center;padding:12px;border-radius:var(--radius);border:1px solid var(--border)}
+.audit-sum-num{font-size:1.6rem;font-weight:800;line-height:1}
+.audit-sum-lbl{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;margin-top:3px;color:var(--muted)}
+.audit-filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+/* ── Settings with Save/Cancel ──────────────────────────── */
+.settings-layout{display:grid;grid-template-columns:200px 1fr;gap:0;min-height:calc(100vh - 60px)}
+.settings-nav{background:var(--surface);border-right:1px solid var(--border);padding:16px 0}
+.settings-nav-btn{display:block;width:100%;padding:9px 18px;background:none;border:none;color:var(--text);font-size:.88rem;font-family:var(--font);cursor:pointer;text-align:left;border-left:3px solid transparent;transition:background .12s}
+.settings-nav-btn:hover{background:var(--surface2)}
+.settings-nav-btn.active{color:var(--accent);font-weight:700;border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent)}
+.settings-nav-btn.has-changes::after{content:' •';color:var(--warn);font-weight:900}
+.settings-panel{padding:0;max-width:700px;display:flex;flex-direction:column}
+.settings-panel-body{padding:28px;flex:1;overflow-y:auto}
+/* Sticky Save/Cancel footer inside settings panel */
+.settings-save-bar{
+  position:sticky;bottom:0;
+  background:var(--surface);
+  border-top:2px solid var(--border);
+  padding:14px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+  z-index:10;
+}
+.settings-save-bar[hidden]{display:none}
+.settings-unsaved-label{font-size:.82rem;color:var(--warn);font-weight:600;display:flex;align-items:center;gap:6px}
+.settings-section-title{font-size:1rem;font-weight:700;margin-bottom:14px;padding-bottom:8px;border-bottom:2px solid var(--border);color:var(--accent)}
+.settings-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);gap:20px;flex-wrap:wrap}
+.settings-row:last-child{border-bottom:none}
+.settings-row-label{font-size:.9rem;font-weight:600;flex:1;min-width:160px}
+.settings-row-desc{font-size:.76rem;color:var(--muted);margin-top:2px}
+.settings-row-control{flex-shrink:0}
+.toggle{position:relative;display:inline-block;width:44px;height:24px}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-track{position:absolute;inset:0;background:var(--border);border-radius:12px;cursor:pointer;transition:background .2s}
+.toggle input:checked+.toggle-track{background:var(--accent)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;background:#fff;border-radius:50%;transition:transform .2s;pointer-events:none}
+.toggle input:checked~.toggle-thumb{transform:translateX(20px)}
+.toggle input:focus-visible+.toggle-track{outline:3px solid var(--focus);outline-offset:2px}
+.shortcut-input{background:var(--surface2);border:2px solid var(--border);border-radius:6px;color:var(--text);font-family:monospace;font-size:.85rem;padding:5px 10px;width:170px;cursor:pointer}
+.shortcut-input:focus{border-color:var(--accent);outline:3px solid var(--focus);outline-offset:2px}
+.shortcut-conflict{color:var(--danger);font-size:.75rem;margin-top:2px}
+.drive-status{display:flex;align-items:center;gap:8px;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--surface2);font-size:.85rem}
+.drive-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.drive-dot.connected{background:var(--success)}
+.drive-dot.disconnected{background:var(--danger)}
+.folder-item{padding:9px 12px;cursor:pointer;font-size:.88rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.folder-item:last-child{border-bottom:none}
+.folder-item:hover,.folder-item:focus{background:var(--surface2);outline:none}
+.folder-item[aria-selected=true]{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent);font-weight:600}
+/* Onboarding */
+.onboard-step{padding:20px;border:2px solid var(--border);border-radius:var(--radius);margin-bottom:14px;background:var(--surface)}
+.onboard-step.completed{border-color:var(--success);background:color-mix(in srgb,var(--success) 5%,var(--surface))}
+.onboard-step-header{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.onboard-num{width:32px;height:32px;border-radius:50%;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;flex-shrink:0}
+.onboard-step.completed .onboard-num{background:var(--success)}
+.onboard-title{font-weight:700;font-size:.95rem}
+.onboard-desc{font-size:.85rem;color:var(--muted);line-height:1.6;margin-bottom:10px}
+.sr-hint-box{background:color-mix(in srgb,var(--accent) 8%,var(--surface));border:1px solid var(--accent);border-radius:var(--radius);padding:12px 14px;font-size:.82rem;line-height:1.7;margin-top:8px}
+.sr-hint-box strong{color:var(--accent)}
+/* About */
+.about-box{text-align:center;padding:32px 20px}
+.about-logo{font-size:2.5rem;font-weight:900;color:var(--accent);letter-spacing:-1px}
+.about-version{font-size:.82rem;color:var(--muted);margin-top:4px}
+.about-desc{max-width:420px;margin:16px auto;font-size:.9rem;color:var(--muted);line-height:1.6}
+/* Milestone */
+.milestone-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:.88rem}
+.milestone-item:last-child{border-bottom:none}
+/* Toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-lg);padding:12px 22px;font-size:.88rem;font-weight:600;z-index:9000;transition:transform .25s,opacity .25s;opacity:0;pointer-events:none;max-width:400px;text-align:center}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+#toast.show{pointer-events:auto}
+#toast.success{border-color:var(--success);color:var(--success)}
+#toast.error{border-color:var(--danger);color:var(--danger)}
+.toast-undo-btn{margin-left:10px;background:none;border:1px solid currentColor;border-radius:4px;padding:2px 8px;cursor:pointer;font-size:.8rem;font-weight:700;font-family:var(--font);color:inherit;vertical-align:middle}
+.toast-undo-btn:hover{opacity:.75}
+.toast-undo-btn:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+#live{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.hidden{display:none!important}
+.btn-inline-status{background:none;border:none;cursor:pointer;padding:0;font:inherit;border-radius:20px;display:inline-flex;}
+.btn-inline-status:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:20px;}
+.btn-inline-status:hover .badge{opacity:.75;}
+/* Filter presets */
+.preset-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;padding:8px 0;border-bottom:1px solid var(--border)}
+.preset-chip{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px 0 0 20px;background:var(--surface2);border:1px solid var(--border);border-right:none;font-size:.78rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font);color:var(--text)}
+.preset-chip:hover,.preset-chip:focus-visible{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);outline:none}
+.preset-chip.active-preset{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.preset-del-btn{display:inline-flex;align-items:center;padding:4px 7px;border-radius:0 20px 20px 0;background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-size:.72rem;color:var(--muted);font-family:var(--font);line-height:1}
+.preset-del-btn:hover{background:var(--danger);color:#fff;border-color:var(--danger)}
+.preset-del-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+/* Task pin */
+.pin-btn{background:none;border:none;cursor:pointer;padding:2px 5px;border-radius:4px;font-size:.88rem;color:var(--muted);line-height:1;font-family:var(--font)}
+.pin-btn[aria-pressed=true]{color:#F59E0B}
+.pin-btn:hover{background:var(--surface2)}
+.pin-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+/* Persona setup */
+.persona-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin:14px 0}
+.persona-card{background:var(--surface);border:2px solid var(--border);border-radius:var(--radius);padding:18px 16px;cursor:pointer;transition:border-color .15s,background .15s;text-align:left;width:100%;font-family:var(--font);display:flex;flex-direction:column;gap:4px}
+.persona-card:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,var(--surface))}
+.persona-card:focus-visible{border-color:var(--accent);outline:3px solid var(--focus);outline-offset:2px}
+.persona-icon{font-size:1.6rem;line-height:1;margin-bottom:4px}
+.persona-title{font-weight:700;font-size:.9rem;color:var(--text)}
+.persona-desc{font-size:.76rem;color:var(--muted);line-height:1.5}
+/* Setup wizard radio cards */
+.setup-role-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:12px 0 6px}
+.setup-role-option{display:flex;flex-direction:column;border:2px solid var(--border);border-radius:var(--radius);padding:14px 12px;cursor:pointer;transition:border-color .15s,background .15s;gap:3px}
+.setup-role-option:hover{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+.setup-role-option:has(input[type=radio]:checked){border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+.setup-role-option:has(input[type=radio]:focus-visible){outline:3px solid var(--focus);outline-offset:2px;border-radius:var(--radius)}
+.setup-role-radio-row{display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.setup-role-radio-row input[type=radio]{accent-color:var(--accent);width:16px;height:16px;flex-shrink:0;cursor:pointer}
+.setup-role-name{font-weight:700;font-size:.88rem;color:var(--text)}
+.setup-role-desc{font-size:.76rem;color:var(--muted);line-height:1.5;padding-left:24px}
+/* Team member table */
+.m-avatar-sm{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font-weight:700;font-size:.65rem;flex-shrink:0;vertical-align:middle}
+/* Row action menu */
+.row-menu-wrap{position:relative;display:inline-block}
+.row-menu{position:absolute;right:0;top:calc(100% + 4px);min-width:160px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:100;list-style:none;padding:4px 0;margin:0}
+.row-menu li button[role=menuitem]{display:block;width:100%;text-align:left;background:none;border:none;padding:8px 14px;cursor:pointer;font-size:.85rem;color:var(--text);font-family:var(--font)}
+.row-menu li button[role=menuitem]:hover,.row-menu li button[role=menuitem]:focus{background:color-mix(in srgb,var(--accent) 10%,var(--surface));color:var(--accent);outline:none}
+.row-menu li button[role=menuitem]:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+/* More nav toggle */
+.more-nav-btn{display:flex;align-items:center;justify-content:space-between;width:100%;background:none;border:none;cursor:pointer;padding:8px 16px;font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-family:var(--font);}
+.more-nav-btn:hover{color:var(--text);}
+.more-nav-btn:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px;}
+.more-nav-arrow{transition:transform .2s;display:inline-block;}
+/* Task section disclosure */
+.task-section{border-top:1px solid var(--border);margin-top:14px;padding-top:0;}
+.task-section>summary{padding:11px 0;font-size:.88rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--accent);list-style:none;user-select:none;}
+.task-section>summary::-webkit-details-marker{display:none;}
+.task-section>summary::before{content:'▶';font-size:.65rem;transition:transform .2s;display:inline-block;flex-shrink:0;}
+.task-section[open]>summary::before{transform:rotate(90deg);}
+.task-section>summary:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px;}
+.task-section-body{padding:10px 0 4px;}
+</style>
+</head>
+<body>
+<nav class="skip-links" aria-label="Skip links">
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  <a class="skip-link" href="#main-nav">Skip to navigation</a>
+</nav>
+<div id="live" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="toast" role="alert" aria-live="assertive" aria-hidden="true"></div>
+<div id="focus-bar" class="focus-mode-bar" hidden role="region" aria-label="Focus mode active">
+  <span aria-hidden="true">🎯</span> Focus Mode — showing only your tasks
+  <button class="btn btn-secondary btn-sm" onclick="toggleFocusMode()">Exit Focus Mode</button>
+</div>
+<!-- Active task timer bar -->
+<div id="timer-bar" class="timer-bar" hidden role="region" aria-label="Task timer running" aria-live="off">
+  <span aria-hidden="true">⏱</span>
+  <span class="timer-task-name" id="timer-task-name">No task</span>
+  <span class="timer-display" id="timer-display" aria-label="Elapsed time">00:00</span>
+  <span class="timer-rounded" id="timer-rounded" aria-live="polite"></span>
+  <div style="display:flex;gap:8px;flex-shrink:0">
+    <button class="btn btn-secondary btn-sm" onclick="pauseResumeTimer()" id="timer-pause-btn" aria-label="Pause timer">Pause</button>
+    <button class="btn btn-danger btn-sm" onclick="stopTimer(true)" aria-label="Stop timer and log time">Stop &amp; Log</button>
+    <button class="btn btn-secondary btn-sm" onclick="stopTimer(false)" aria-label="Discard timer without logging">Discard</button>
+  </div>
+</div>
+<div id="app">
+  <main id="main">
+    <header id="topbar">
+      <h1 class="page-title" id="page-title">Dashboard</h1>
+      <div class="topbar-right" id="topbar-actions">
+        <div id="contextual-actions" style="display:contents"></div>
+        <button class="btn btn-secondary btn-sm" onclick="toggleGlobalSearch()" aria-label="Open global search" aria-expanded="false" id="search-toggle-btn"><span aria-hidden="true">🔍</span> Search</button>
+        <button class="btn btn-secondary btn-sm" id="focus-btn" onclick="toggleFocusMode()" aria-pressed="false" aria-label="Toggle focus mode"><span aria-hidden="true">🎯</span> Focus</button>
+        <div class="row-menu-wrap" style="flex-shrink:0">
+          <button class="btn btn-secondary btn-sm" id="actions-menu-btn" onclick="toggleActionsMenu()" aria-haspopup="menu" aria-expanded="false" aria-label="More actions"><span aria-hidden="true">⋮</span> Actions</button>
+          <ul class="row-menu" id="actions-menu" role="menu" aria-labelledby="actions-menu-btn" hidden>
+            <li role="none"><button role="menuitem" onclick="closeActionsMenu();showSessionSummary()"><span aria-hidden="true">📋</span> Session Summary</button></li>
+            <li role="none"><button role="menuitem" onclick="closeActionsMenu();openQuickCapture()"><span aria-hidden="true">⚡</span> Quick Capture</button></li>
+            <li role="none"><button role="menuitem" onclick="closeActionsMenu();dailyBriefing()"><span aria-hidden="true">📢</span> Daily Briefing</button></li>
+          </ul>
+        </div>
+        <button class="btn btn-primary" id="primary-btn" onclick="openAddTask()" aria-haspopup="dialog"><span aria-hidden="true">＋</span> Add Task</button>
+      </div>
+    </header>
+    <div id="search-bar" class="search-bar" hidden role="search" aria-label="Global search">
+      <div class="search-wrap">
+        <label for="global-search" class="sr-only">Search all tasks, projects, team, and activity</label>
+        <input id="global-search" class="form-input" type="search" placeholder="Search tasks, projects, team, activity…" autocomplete="off" oninput="runGlobalSearch(this.value)" aria-autocomplete="list" aria-controls="search-results"/>
+        <div id="search-results" class="search-results hidden" role="listbox" aria-label="Search results"></div>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="toggleGlobalSearch()" aria-label="Close search">Close</button>
+    </div>
+    <nav id="breadcrumb" class="breadcrumb" aria-label="Current location">
+      <span aria-hidden="true">VantagePM</span>
+      <span class="breadcrumb-sep" aria-hidden="true">›</span>
+      <span class="breadcrumb-current" id="breadcrumb-current" aria-current="page">Dashboard</span>
+    </nav>
+    <div class="content" id="main-content" role="region" tabindex="-1" aria-labelledby="page-title">
+      <p class="sr-only">Loading VantagePM…</p>
+    </div>
+  </main>
+  <aside id="sidebar" aria-label="Application navigation">
+    <div class="sb-header">
+      <div aria-label="VantagePM" role="img">
+        <svg viewBox="0 0 220 56" width="180" height="56" aria-hidden="true" focusable="false">
+          <rect x="0" y="0" width="220" height="56" rx="8" fill="#0F1E3C"/>
+          <polyline points="18,44 34,18 50,44" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <polyline points="25,44 34,28 43,44" fill="none" stroke="#60A5FA" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="34" cy="17" r="2.5" fill="#60A5FA"/>
+          <line x1="13" y1="46" x2="55" y2="46" stroke="#2563EB" stroke-width="0.8"/>
+          <text x="62" y="36" font-family="Georgia,serif" font-size="22" font-weight="700" fill="#F0F6FF" letter-spacing="-0.5">Vantage</text>
+          <text x="162" y="36" font-family="Georgia,serif" font-size="22" font-weight="400" fill="#2563EB">PM</text>
+          <text x="62" y="49" font-family="'Segoe UI',Arial,sans-serif" font-size="7" fill="#60A5FA" letter-spacing="2">PROJECT MANAGEMENT</text>
+        </svg>
+      </div>
+    </div>
+    <nav id="main-nav" aria-label="Main navigation" tabindex="-1">
+      <div class="nav-section" id="nl1">Workspace</div>
+      <ul role="list" aria-labelledby="nl1" style="list-style:none">
+        <li><button class="nav-btn" data-view="dashboard" onclick="nav('dashboard',this)" aria-current="page"><span class="nav-icon" aria-hidden="true">📊</span>Dashboard</button></li>
+        <li><button class="nav-btn" data-view="tasks"     onclick="nav('tasks',this)">    <span class="nav-icon" aria-hidden="true">✅</span>Tasks</button></li>
+        <li><button class="nav-btn" data-view="projects"  onclick="nav('projects',this)"> <span class="nav-icon" aria-hidden="true">📁</span>Projects</button></li>
+        <li><button class="nav-btn" data-view="calendar"  onclick="nav('calendar',this)"> <span class="nav-icon" aria-hidden="true">📅</span>Calendar</button></li>
+        <li><button class="nav-btn" data-view="team"      onclick="nav('team',this)">     <span class="nav-icon" aria-hidden="true">👥</span>Team</button></li>
+        <li><button class="nav-btn" data-view="reports"   onclick="nav('reports',this)">  <span class="nav-icon" aria-hidden="true">📈</span>Reports</button></li>
+        <li><button class="nav-btn" data-view="audit"     onclick="nav('audit',this)">    <span class="nav-icon" aria-hidden="true">♿</span>WCAG Audit</button></li>
+      </ul>
+      <button class="more-nav-btn" id="more-nav-btn" onclick="toggleMoreNav()" aria-expanded="false" aria-controls="more-nav-section">
+        <span>More</span><span class="more-nav-arrow" aria-hidden="true">▾</span>
+      </button>
+      <ul id="more-nav-section" role="list" style="list-style:none" hidden>
+        <li><button class="nav-btn" data-view="milestones" onclick="nav('milestones',this)"><span class="nav-icon" aria-hidden="true">🏁</span>Milestones</button></li>
+        <li><button class="nav-btn" data-view="health"     onclick="nav('health',this)">   <span class="nav-icon" aria-hidden="true">🏥</span>Project Health</button></li>
+        <li><button class="nav-btn" data-view="templates"  onclick="nav('templates',this)"><span class="nav-icon" aria-hidden="true">📋</span>Templates</button></li>
+        <li><button class="nav-btn" data-view="activity"   onclick="nav('activity',this)"> <span class="nav-icon" aria-hidden="true">📋</span>Activity Log</button></li>
+        <li><button class="nav-btn" data-view="whats-new"  onclick="nav('whats-new',this)"><span class="nav-icon" aria-hidden="true">🆕</span>What's New</button></li>
+        <li><button class="nav-btn" data-view="onboarding" onclick="nav('onboarding',this)"><span class="nav-icon" aria-hidden="true">👋</span>Onboarding</button></li>
+      </ul>
+      <div class="nav-section" id="nl2">App</div>
+      <ul role="list" aria-labelledby="nl2" style="list-style:none">
+        <li><button class="nav-btn" data-view="settings" onclick="nav('settings',this)"><span class="nav-icon" aria-hidden="true">⚙️</span>Settings</button></li>
+      </ul>
+    </nav>
+    <div class="sb-footer">
+      <div class="sync-status" id="sync-status" aria-live="polite" aria-label="Sync status"></div>
+      <button class="btn btn-secondary btn-sm" onclick="syncDrive()" aria-label="Sync with Google Drive now"><span aria-hidden="true">🔄</span> Sync</button>
+    </div>
+  </aside>
+</div>
+
+<!-- Task modal -->
+<div id="task-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="tm-title">
+  <div class="modal">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="tm-title">Add Task</h2><button class="modal-close" onclick="closeModal('task-modal')" aria-label="Close task dialog">✕</button></div>
+    <div id="priority-suggestion" class="priority-suggestion hidden" role="status" aria-live="polite"></div>
+    <div id="tab-details">
+      <div class="form-group"><label class="form-label" for="t-name">Task name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="t-name" type="text" autocomplete="off" aria-required="true" aria-describedby="t-name-err" oninput="suggestPriority()"/><span class="form-error hidden" id="t-name-err" role="alert">Please enter a task name.</span></div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label" for="t-project">Project</label><div style="display:flex;gap:8px;align-items:center"><select class="form-select" id="t-project" style="flex:1"><option value="">— No project —</option></select><button type="button" class="btn btn-secondary btn-sm" onclick="openAddProjectFromTask()" aria-label="Create a new project" aria-haspopup="dialog">＋ New</button></div></div>
+        <div class="form-group"><label class="form-label" for="t-color">Color Label</label><select class="form-select" id="t-color"><option value="">None</option><option value="#E53935">Red</option><option value="#FB8C00">Orange</option><option value="#FDD835">Yellow</option><option value="#43A047">Green</option><option value="#1E88E5">Blue</option><option value="#8E24AA">Purple</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label" for="t-desc">Description</label><textarea class="form-textarea" id="t-desc"></textarea></div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label" for="t-assignee">Assignee</label><select class="form-select" id="t-assignee"></select></div>
+        <div class="form-group"><label class="form-label" for="t-priority">Priority</label><select class="form-select" id="t-priority"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+        <div class="form-group"><label class="form-label" for="t-status">Status</label><select class="form-select" id="t-status"></select></div>
+        <div class="form-group"><label class="form-label" for="t-due">Due date<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="t-due" type="text" aria-required="true" aria-describedby="t-due-err t-date-hint" placeholder="MM/DD/YYYY or &quot;next Friday&quot;" oninput="resolveNaturalDate('t-due','t-date-hint');suggestPriority()"/><div class="date-hint" id="t-date-hint" aria-live="polite"></div><span class="form-error hidden" id="t-due-err" role="alert">Please select a due date.</span></div>
+      </div>
+      <div class="form-group"><label class="form-label" for="t-recur">Recurring</label><select class="form-select" id="t-recur"><option value="none">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option></select></div>
+      <div class="form-group"><label class="form-label" for="t-prog">Progress: <span id="t-prog-val">0</span>%</label><div style="display:flex;align-items:center;gap:10px"><input type="range" id="t-prog" min="0" max="100" value="0" step="5" style="flex:1;accent-color:var(--accent)" oninput="document.getElementById('t-prog-val').textContent=this.value;this.setAttribute('aria-valuenow',this.value)" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"/><button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('t-prog').value=100;document.getElementById('t-prog-val').textContent='100';document.getElementById('t-prog').setAttribute('aria-valuenow',100);" aria-label="Set progress to 100 percent complete">Mark 100%</button></div></div>
+    </div>
+    <details class="task-section" id="section-time" ontoggle="if(this.open){renderTimeLog();}">
+      <summary>Time Tracking</summary>
+      <div class="task-section-body">
+        <div id="time-log-list" aria-live="polite"></div>
+        <div class="grid-2" style="margin-top:10px">
+          <div class="form-group"><label class="form-label" for="tl-person">Person</label><input class="form-input" id="tl-person" type="text" placeholder="Your name"/></div>
+          <div class="form-group"><label class="form-label" for="tl-hours">Hours</label><input class="form-input" id="tl-hours" type="number" min="0.25" max="24" step="0.25" placeholder="e.g. 1.5"/></div>
+        </div>
+        <div class="form-group"><label class="form-label" for="tl-note">Note</label><input class="form-input" id="tl-note" type="text" placeholder="What did you work on?"/></div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn btn-success btn-sm" id="timer-start-btn" onclick="startTimerFromTask()" aria-label="Start live timer for this task">▶ Start Timer</button>
+          <span style="font-size:.8rem;color:var(--muted)">Timer rounds to nearest 15 min and auto-logs when stopped.</span>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addTimeLog()">Log Time Manually</button>
+        <p style="margin-top:10px;font-size:.84rem;color:var(--muted)">Total: <strong id="total-hours-display">0</strong> hours</p>
+      </div>
+    </details>
+    <details class="task-section" id="section-comments" ontoggle="if(this.open){renderComments();}">
+      <summary>Comments</summary>
+      <div class="task-section-body">
+        <div id="comment-list" aria-live="polite" style="margin-bottom:14px;max-height:180px;overflow-y:auto"></div>
+        <div class="form-group"><label class="form-label" for="comment-author">Your name</label><input class="form-input" id="comment-author" type="text" placeholder="Your name"/></div>
+        <div class="form-group"><label class="form-label" for="comment-text">Comment</label><textarea class="form-textarea" id="comment-text" style="min-height:60px"></textarea></div>
+        <button class="btn btn-primary btn-sm" onclick="addComment()">Add Comment</button>
+      </div>
+    </details>
+    <details class="task-section" id="section-attachments" ontoggle="if(this.open){renderAttachments();}">
+      <summary>Attachments</summary>
+      <div class="task-section-body">
+        <div id="attach-list" aria-live="polite" style="margin-bottom:10px"></div>
+        <div class="form-group"><label class="form-label" for="attach-name">File name</label><input class="form-input" id="attach-name" type="text"/></div>
+        <div class="form-group"><label class="form-label" for="attach-url">URL or path</label><input class="form-input" id="attach-url" type="text" placeholder="https:// or \\server\share"/></div>
+        <button class="btn btn-primary btn-sm" onclick="addAttachment()">Add Attachment</button>
+      </div>
+    </details>
+    <details class="task-section" id="section-dependencies" ontoggle="if(this.open){renderDependencies();}">
+      <summary>Dependencies</summary>
+      <div class="task-section-body">
+        <div id="dep-list" aria-live="polite" style="margin-bottom:10px"></div>
+        <div class="form-group"><label class="form-label" for="dep-select">Add blocking task</label><select class="form-select" id="dep-select"></select></div>
+        <button class="btn btn-primary btn-sm" onclick="addDependency()">Add Dependency</button>
+      </div>
+    </details>
+    <div class="modal-ft">
+      <button class="btn btn-secondary btn-sm" onclick="saveAsTemplate()" aria-label="Save this task as a reusable template">💾 Save as Template</button>
+      <button class="btn btn-secondary" onclick="closeModal('task-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTask()">Save Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- Project / milestone / member / confirm / folder / shortcuts / briefing modals (same as v4) -->
+<div id="project-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="pm-title">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="pm-title">Add Project</h2><button class="modal-close" onclick="closeModal('project-modal')" aria-label="Close">✕</button></div>
+    <div class="form-group"><label class="form-label" for="p-name">Name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="p-name" type="text" aria-required="true"/></div>
+    <div class="form-group"><label class="form-label" for="p-desc">Description</label><textarea class="form-textarea" id="p-desc" style="min-height:60px"></textarea></div>
+    <div class="form-group"><label class="form-label" for="p-color">Color</label><select class="form-select" id="p-color"><option value="#1547C8">Blue</option><option value="#0A6B3C">Green</option><option value="#C0250F">Red</option><option value="#7A4700">Orange</option><option value="#5B2D8E">Purple</option></select></div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('project-modal')">Cancel</button><button class="btn btn-primary" onclick="saveProject()">Add Project</button></div>
+  </div>
+</div>
+<div id="milestone-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="ml-title">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="ml-title">Add Milestone</h2><button class="modal-close" onclick="closeModal('milestone-modal')" aria-label="Close">✕</button></div>
+    <div class="form-group"><label class="form-label" for="ml-name">Name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="ml-name" type="text" aria-required="true"/></div>
+    <div class="form-group"><label class="form-label" for="ml-date">Date<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="ml-date" type="date" aria-required="true"/></div>
+    <div class="form-group"><label class="form-label" for="ml-project">Project</label><select class="form-select" id="ml-project"><option value="">— No project —</option></select></div>
+    <div class="form-group"><label class="form-label" for="ml-desc">Description</label><textarea class="form-textarea" id="ml-desc" style="min-height:60px"></textarea></div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('milestone-modal')">Cancel</button><button class="btn btn-primary" onclick="saveMilestone()">Add Milestone</button></div>
+  </div>
+</div>
+<div id="status-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="st-title">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="st-title">Add Custom Status</h2><button class="modal-close" onclick="closeModal('status-modal')" aria-label="Close">✕</button></div>
+    <div class="form-group"><label class="form-label" for="st-name">Status name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="st-name" type="text" placeholder="e.g. Blocked, In Review…" aria-required="true"/></div>
+    <div class="form-group"><label class="form-label" for="st-color">Color</label>
+      <select class="form-select" id="st-color">
+        <option value="#1547C8">Blue</option><option value="#0A6B3C">Green</option>
+        <option value="#C0250F">Red</option><option value="#7A4700">Orange</option>
+        <option value="#5B2D8E">Purple</option><option value="#555">Gray</option>
+      </select>
+    </div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('status-modal')">Cancel</button><button class="btn btn-primary" onclick="saveCustomStatus()">Add Status</button></div>
+  </div>
+</div>
+<div id="member-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="mm-title">
+  <div class="modal">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="mm-title">Add Team Member</h2><button class="modal-close" onclick="closeModal('member-modal')" aria-label="Close">✕</button></div>
+    <div class="grid-2">
+      <div class="form-group"><label class="form-label" for="m-name">Full name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="m-name" type="text" aria-required="true"/></div>
+      <div class="form-group"><label class="form-label" for="m-email">Email<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="m-email" type="email" aria-required="true"/></div>
+      <div class="form-group"><label class="form-label" for="m-role">Role<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="m-role" type="text" aria-required="true"/></div>
+      <div class="form-group"><label class="form-label" for="m-dept">Department</label><input class="form-input" id="m-dept" type="text"/></div>
+    </div>
+    <div class="form-group"><label class="form-label" for="m-photo">Photo URL</label><input class="form-input" id="m-photo" type="url" placeholder="https://"/></div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('member-modal')">Cancel</button><button class="btn btn-primary" onclick="saveMember()">Add Member</button></div>
+  </div>
+</div>
+<div id="confirm-modal" class="overlay" hidden aria-modal="true" role="alertdialog" tabindex="-1" aria-labelledby="cf-title" aria-describedby="cf-desc">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="cf-title">Confirm</h2><button class="modal-close" onclick="closeModal('confirm-modal')" aria-label="Close">✕</button></div>
+    <p id="cf-desc"></p>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('confirm-modal')">Cancel</button><button class="btn btn-danger" id="cf-ok">Confirm</button></div>
+  </div>
+</div>
+<div id="folder-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="fm-title">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="fm-title">Select Google Drive Folder</h2><button class="modal-close" onclick="closeModal('folder-modal')" aria-label="Close">✕</button></div>
+    <div id="folder-list-wrap" role="listbox" aria-label="Drive folders" style="max-height:220px;overflow-y:auto;border:2px solid var(--border);border-radius:var(--radius);"><div style="padding:20px;text-align:center;color:var(--muted)">Loading…</div></div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('folder-modal')">Cancel</button><button class="btn btn-primary" id="folder-ok" onclick="confirmFolder()" disabled>Select Folder</button></div>
+  </div>
+</div>
+<div id="shortcuts-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="sh-title">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="sh-title"><span aria-hidden="true">⌨️</span> Keyboard Shortcuts</h2><button class="modal-close" onclick="closeModal('shortcuts-modal')" aria-label="Close">✕</button></div>
+    <div id="shortcuts-list"></div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('shortcuts-modal')">Close</button><button class="btn btn-primary" onclick="closeModal('shortcuts-modal');nav('settings');setTimeout(()=>showSettingsTab('shortcuts'),150)">Edit Shortcuts</button></div>
+  </div>
+</div>
+<div id="briefing-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="br-title">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="br-title"><span aria-hidden="true">📢</span> Daily Briefing</h2><button class="modal-close" onclick="closeModal('briefing-modal')" aria-label="Close">✕</button></div>
+    <div id="briefing-content" aria-live="polite"></div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('briefing-modal')">Close</button><button class="btn btn-primary" onclick="readBriefingAloud()"><span aria-hidden="true">🔊</span> Read Again</button></div>
+  </div>
+</div>
+<!-- Unsaved changes warning modal -->
+<div id="unsaved-modal" class="overlay" hidden aria-modal="true" role="alertdialog" tabindex="-1" aria-labelledby="uw-title" aria-describedby="uw-desc">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="uw-title">Unsaved Changes</h2><button class="modal-close" onclick="closeModal('unsaved-modal')" aria-label="Close">✕</button></div>
+    <p id="uw-desc">You have unsaved changes on this settings tab. What would you like to do?</p>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="discardAndNavigate()">Discard Changes</button>
+      <button class="btn btn-primary" onclick="closeModal('unsaved-modal')">Keep Editing</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick capture modal -->
+<div id="qc-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="qc-title">
+  <div class="modal qc-modal">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="qc-title"><span aria-hidden="true">⚡</span> Quick Capture</h2><button class="modal-close" onclick="closeModal('qc-modal')" aria-label="Close quick capture">✕</button></div>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px">Drop a task fast. You'll assign a project and person before it saves.</p>
+    <div class="form-group">
+      <label class="form-label" for="qc-name">Task name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+      <input class="form-input" id="qc-name" type="text" autocomplete="off" aria-required="true" aria-describedby="qc-name-err" placeholder="What needs to be done?"/>
+      <span class="form-error hidden" id="qc-name-err" role="alert">Please enter a task name.</span>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="qc-due">Due date <span style="font-weight:400;color:var(--muted)">(or type "next Friday", "in 2 weeks"…)</span></label>
+      <input class="form-input" id="qc-due" type="text" placeholder="MM/DD/YYYY or natural language" oninput="resolveNaturalDate('qc-due','qc-date-hint')" aria-describedby="qc-date-hint"/>
+      <div class="date-hint" id="qc-date-hint" aria-live="polite"></div>
+    </div>
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label" for="qc-project">Project<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <select class="form-select" id="qc-project" aria-required="true" aria-describedby="qc-proj-err">
+          <option value="">— Select project —</option>
+        </select>
+        <span class="form-error hidden" id="qc-proj-err" role="alert">Please select a project.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="qc-assignee">Assignee<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <select class="form-select" id="qc-assignee" aria-required="true" aria-describedby="qc-asgn-err">
+          <option value="">— Select person —</option>
+        </select>
+        <span class="form-error hidden" id="qc-asgn-err" role="alert">Please select an assignee.</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="qc-priority">Priority</label>
+      <select class="form-select" id="qc-priority">
+        <option value="high">High</option>
+        <option value="medium" selected>Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal('qc-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveQuickCapture()">Save Task</button>
+    </div>
+  </div>
+</div>
+<!-- Session summary modal -->
+<div id="session-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="ss-title">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="ss-title"><span aria-hidden="true">📋</span> Session Summary</h2><button class="modal-close" onclick="closeModal('session-modal')" aria-label="Close">✕</button></div>
+    <div id="session-content" aria-live="polite"></div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('session-modal')">Close</button><button class="btn btn-primary" onclick="readSessionAloud()">🔊 Read Aloud</button></div>
+  </div>
+</div>
+
+<!-- Project notes modal -->
+<div id="notes-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="nm-title">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="nm-title"><span aria-hidden="true">📝</span> Project Notes</h2><button class="modal-close" onclick="closeModal('notes-modal')" aria-label="Close">✕</button></div>
+    <div id="notes-project-label" style="font-size:.82rem;color:var(--muted);margin-bottom:14px"></div>
+    <div id="notes-list" aria-live="polite" style="max-height:260px;overflow-y:auto;margin-bottom:14px"></div>
+    <div class="form-group"><label class="form-label" for="note-author">Your name</label><input class="form-input" id="note-author" type="text" placeholder="Your name"/></div>
+    <div class="form-group"><label class="form-label" for="note-text">Note</label><textarea class="form-textarea" id="note-text" placeholder="Context, decision, or link…" style="min-height:80px"></textarea></div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('notes-modal')">Close</button><button class="btn btn-primary" onclick="saveNote()">Add Note</button></div>
+  </div>
+</div>
+
+<!-- Change role modal (lead/manager only) -->
+<div id="change-role-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="cr-title">
+  <div class="modal" style="max-width:380px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="cr-title">Change Role</h2><button class="modal-close" onclick="closeModal('change-role-modal')" aria-label="Close">✕</button></div>
+    <p id="cr-member-name" style="font-size:.88rem;font-weight:600;margin-bottom:14px"></p>
+    <div class="form-group">
+      <label class="form-label" for="cr-role">New role<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+      <input class="form-input" id="cr-role" type="text" placeholder="e.g. Lead Tester, QA Engineer" aria-required="true" aria-describedby="cr-role-err"/>
+      <span class="form-error hidden" id="cr-role-err" role="alert">Please enter a role.</span>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal('change-role-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveChangeRole()">Save Role</button>
+    </div>
+  </div>
+</div>
+
+<!-- Initial setup wizard (non-dismissable — user must complete mode + role + name) -->
+<div id="setup-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="sw-title">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-hd">
+      <h2 class="modal-title" tabindex="-1" id="sw-title"><span aria-hidden="true">🚀</span> Welcome to VantagePM</h2>
+    </div>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:16px;line-height:1.6">Choose how you'll use VantagePM, select your role, and enter your name to get started.</p>
+    <div class="tabs-row" role="tablist" aria-label="Select your mode" onkeydown="handleTablistArrows(event)">
+      <button class="tab-btn" role="tab" aria-selected="true" aria-controls="setup-tab-a11y" id="setup-tbtn-a11y" onclick="switchSetupTab('a11y')">Digital Accessibility</button>
+      <button class="tab-btn" role="tab" aria-selected="false" aria-controls="setup-tab-pm" id="setup-tbtn-pm" onclick="switchSetupTab('pm')">Project Management</button>
+    </div>
+    <div id="setup-tab-a11y" role="tabpanel" aria-labelledby="setup-tbtn-a11y">
+      <p style="font-size:.84rem;color:var(--muted);margin:12px 0 14px;line-height:1.6">Choose your role as a digital accessibility professional. Sample audit projects, WCAG tasks, and templates matching your workflow will be pre-loaded.</p>
+      <fieldset style="border:none;padding:0;margin:0 0 18px">
+        <legend style="font-size:.9rem;font-weight:700;margin-bottom:10px;display:block">Your role<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></legend>
+        <div class="setup-role-grid">
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Accessibility Tester</span><input type="radio" name="setup-role" value="tester"/></span>
+            <span class="setup-role-desc">Solo auditor running WCAG tests. Gets an audit project, test tasks, and templates pre-loaded.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Project Lead</span><input type="radio" name="setup-role" value="lead"/></span>
+            <span class="setup-role-desc">Leading a small remediation team. Gets team members, a sprint project, distributed tasks, and milestones.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Project Manager</span><input type="radio" name="setup-role" value="manager"/></span>
+            <span class="setup-role-desc">Managing multiple accessibility programs. Gets 3 projects, a full team, time logs, and filter presets.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Blank Slate</span><input type="radio" name="setup-role" value="blank"/></span>
+            <span class="setup-role-desc">Start fresh with no sample data — add your own projects and tasks at your own pace.</span>
+          </label>
+        </div>
+        <span class="form-error hidden" id="setup-role-a11y-err" role="alert">Please select a role to continue.</span>
+      </fieldset>
+    </div>
+    <div id="setup-tab-pm" role="tabpanel" aria-labelledby="setup-tbtn-pm" hidden>
+      <p style="font-size:.84rem;color:var(--muted);margin:12px 0 14px;line-height:1.6">Choose your role as a project manager. Sample projects and tasks will be pre-loaded. WCAG audit tools will be hidden from the interface.</p>
+      <fieldset style="border:none;padding:0;margin:0 0 18px">
+        <legend style="font-size:.9rem;font-weight:700;margin-bottom:10px;display:block">Your role<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></legend>
+        <div class="setup-role-grid">
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Solo Project Manager</span><input type="radio" name="setup-role-pm" value="pm-solo"/></span>
+            <span class="setup-role-desc">Managing your own projects and tasks. Gets a single project with realistic sample tasks pre-loaded.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Team Lead</span><input type="radio" name="setup-role-pm" value="pm-lead"/></span>
+            <span class="setup-role-desc">Leading a small project team. Gets team members, two projects, distributed tasks, and milestones.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Program Manager</span><input type="radio" name="setup-role-pm" value="pm-manager"/></span>
+            <span class="setup-role-desc">Managing multiple programs. Gets three projects, a full team, time logs, milestones, and filter presets.</span>
+          </label>
+          <label class="setup-role-option">
+            <span class="setup-role-radio-row"><span class="setup-role-name">Blank Slate</span><input type="radio" name="setup-role-pm" value="pm-blank"/></span>
+            <span class="setup-role-desc">Start fresh with no sample data — add your own projects and tasks at your own pace.</span>
+          </label>
+        </div>
+        <span class="form-error hidden" id="setup-role-pm-err" role="alert">Please select a role to continue.</span>
+      </fieldset>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="setup-name">Your name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+      <input class="form-input" id="setup-name" type="text" autocomplete="name" placeholder="e.g. Aaron Smith" aria-required="true" aria-describedby="setup-name-hint setup-name-err"/>
+      <div class="form-hint" id="setup-name-hint">Used in Focus Mode, Daily Briefing, and time logs.</div>
+      <span class="form-error hidden" id="setup-name-err" role="alert">Please enter your name to continue.</span>
+    </div>
+    <div class="modal-ft">
+      <button class="btn btn-primary" onclick="completeSetup()">Get Started</button>
+    </div>
+  </div>
+</div>
+
+<!-- Save filter preset modal -->
+<div id="preset-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="pr-title">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="pr-title">Save Filter Preset</h2><button class="modal-close" onclick="closeModal('preset-modal')" aria-label="Close">✕</button></div>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:14px">Saves the current status, priority, project, and search filters as a named preset you can reuse.</p>
+    <div class="form-group"><label class="form-label" for="preset-name">Preset name<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label><input class="form-input" id="preset-name" type="text" placeholder="e.g. My High Priority Tasks" aria-required="true" aria-describedby="preset-name-err"/><span class="form-error hidden" id="preset-name-err" role="alert">Please enter a preset name.</span></div>
+    <div class="modal-ft"><button class="btn btn-secondary" onclick="closeModal('preset-modal')">Cancel</button><button class="btn btn-primary" onclick="saveFilterPreset()">Save Preset</button></div>
+  </div>
+</div>
+<!-- Batch time log modal -->
+<div id="timelog-batch-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="tlb-title">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="tlb-title">Log Time — Multiple Tasks</h2><button class="modal-close" onclick="closeModal('timelog-batch-modal')" aria-label="Close">✕</button></div>
+    <div style="display:flex;gap:12px;align-items:flex-end;margin-bottom:16px;flex-wrap:wrap">
+      <div class="form-group" style="margin:0;flex:1;min-width:140px">
+        <label class="form-label" for="tlb-date">Date<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <input class="form-input" id="tlb-date" type="date" aria-required="true"/>
+      </div>
+      <div class="form-group" style="margin:0;flex:1;min-width:160px">
+        <label class="form-label" for="tlb-person">Person</label>
+        <select class="form-select" id="tlb-person" onchange="renderBatchTimeRows()"></select>
+      </div>
+    </div>
+    <div id="tlb-rows" role="list" aria-label="Task time entries" style="max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:4px 0"></div>
+    <div id="tlb-empty" class="hidden" style="text-align:center;color:var(--muted);padding:20px;font-size:.85rem">No open tasks for this person.</div>
+    <p style="font-size:.78rem;color:var(--muted);margin:10px 0 0">Leave blank to skip a task. Hours are rounded up to the nearest 15 minutes (billing style).</p>
+    <div class="modal-ft">
+      <button class="btn btn-secondary" onclick="closeModal('timelog-batch-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveBatchTime()">Save Time Entries</button>
+    </div>
+  </div>
+</div>
+
+<!-- Feedback modal -->
+<div id="feedback-modal" class="overlay" hidden aria-modal="true" role="dialog" tabindex="-1" aria-labelledby="fb-title">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="fb-title">Report an Issue</h2><button class="modal-close" onclick="closeModal('feedback-modal')" aria-label="Close">✕</button></div>
+    <p style="font-size:.82rem;color:var(--muted);background:var(--warn-bg);border:1px solid var(--warn);border-radius:var(--radius);padding:8px 12px;margin-bottom:14px" role="note">Submissions are posted as public issues on the VantagePM GitHub repository. Do not include personal information such as your name, email address, or client details.</p>
+    <form onsubmit="event.preventDefault();submitFeedbackForm()">
+      <fieldset style="border:none;padding:0;margin:0 0 16px">
+        <legend class="form-label" style="margin-bottom:8px">Assistive technology you use <span style="font-size:.8rem;color:var(--muted)">(select all that apply)</span></legend>
+        <div style="display:flex;flex-wrap:wrap;gap:8px 20px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="JAWS"/> JAWS</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="NVDA"/> NVDA</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="VoiceOver"/> VoiceOver</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="Narrator"/> Narrator</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="Dragon NaturallySpeaking"/> Dragon</label>
+          <label style="display:flex;align-items:center;gap=6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="ZoomText"/> ZoomText</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="Switch Access"/> Switch Access</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.88rem"><input type="checkbox" name="fb-at" value="None"/> None</label>
+        </div>
+      </fieldset>
+      <div class="form-group">
+        <label class="form-label" for="fb-issue">What is the issue?<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <textarea class="form-input" id="fb-issue" rows="4" aria-required="true" aria-describedby="fb-issue-err" placeholder="Describe what went wrong or what doesn't work as expected."></textarea>
+        <span id="fb-issue-err" class="field-err hidden" role="alert">Please describe the issue.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fb-solution">What should the solution be? <span style="font-size:.8rem;color:var(--muted)">(optional)</span></label>
+        <textarea class="form-input" id="fb-solution" rows="3" placeholder="Describe what you'd expect or how you think it could be fixed."></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="fb-impact">How impactful is this to you?<span class="req" aria-hidden="true">*</span><span class="sr-only"> required</span></label>
+        <select class="form-select" id="fb-impact" aria-required="true" aria-describedby="fb-impact-err">
+          <option value="">— Select impact —</option>
+          <option value="Critical — the app is unusable for me">Critical — the app is unusable for me</option>
+          <option value="High — significantly affects my workflow">High — significantly affects my workflow</option>
+          <option value="Medium — noticeable but I can work around it">Medium — noticeable but I can work around it</option>
+          <option value="Low — minor inconvenience">Low — minor inconvenience</option>
+        </select>
+        <span id="fb-impact-err" class="field-err hidden" role="alert">Please select an impact level.</span>
+      </div>
+      <div class="modal-ft">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('feedback-modal')">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="fb-submit">Submit Feedback</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Hidden file input for CSV import -->
+<input type="file" id="csv-file-input" accept=".csv,text/csv" style="position:absolute;left:-9999px;width:1px;height:1px" aria-hidden="true" tabindex="-1" onchange="handleCSVImport(this)"/>
+
+<script src="storage.js"></script>
+<script src="renderer.js"></script>
+
+</body>
+</html>
