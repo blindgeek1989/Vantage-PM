@@ -880,6 +880,15 @@ tr:hover td{background:var(--surface2)}
 <!-- Hidden file input for CSV import -->
 <input type="file" id="csv-file-input" accept=".csv,text/csv" style="position:absolute;left:-9999px;width:1px;height:1px" aria-hidden="true" tabindex="-1" onchange="handleCSVImport(this)"/>
 
+<div id="upgrade-modal" class="overlay" hidden aria-modal="true" role="alertdialog" tabindex="-1" aria-labelledby="upgrade-modal-title" aria-describedby="upgrade-modal-desc">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-hd"><h2 class="modal-title" tabindex="-1" id="upgrade-modal-title"><span aria-hidden="true">🔑</span> Pro Feature</h2><button class="modal-close" onclick="closeModal('upgrade-modal')" aria-label="Close">✕</button></div>
+    <p id="upgrade-modal-desc" style="margin-bottom:12px"><strong id="upgrade-feature-name"></strong> is available with VantagePM Pro.</p>
+    <p style="font-size:.87rem;color:var(--muted);margin-bottom:18px">License keys are coming soon. Once available, enter your key in <strong>Settings → License</strong> to unlock Pro.</p>
+    <div class="modal-ft"><button class="btn btn-primary" onclick="closeModal('upgrade-modal')">OK</button><button class="btn btn-secondary" onclick="closeModal('upgrade-modal');nav('settings',null,'license')">View License</button></div>
+  </div>
+</div>
+
 <script src="storage.js"></script>
 <script src="renderer.js"></script>
 
