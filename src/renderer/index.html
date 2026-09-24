@@ -398,8 +398,8 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 <div id="app">
-  <div id="main" role="main">
-    <header id="topbar" role="banner">
+  <main id="main">
+    <header id="topbar">
       <h1 class="page-title" id="page-title">Dashboard</h1>
       <div class="topbar-right" id="topbar-actions">
         <div id="contextual-actions" style="display:contents"></div>
@@ -429,8 +429,10 @@ tr:hover td{background:var(--surface2)}
       <span class="breadcrumb-sep" aria-hidden="true">›</span>
       <span class="breadcrumb-current" id="breadcrumb-current" aria-current="page">Dashboard</span>
     </nav>
-    <div class="content" id="main-content" tabindex="-1" aria-labelledby="page-title"></div>
-  </div>
+    <div class="content" id="main-content" role="region" tabindex="-1" aria-labelledby="page-title">
+      <p class="sr-only">Loading VantagePM…</p>
+    </div>
+  </main>
   <aside id="sidebar" aria-label="Application navigation">
     <div class="sb-header">
       <div aria-label="VantagePM" role="img">

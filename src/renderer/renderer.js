@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 const IS_ELECTRON = typeof window.electronAPI !== 'undefined';
 
 const WCAG_CRITERIA=[
@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS = {
     globalSearch:'Alt+Slash',quickShortcuts:'Alt+K',quickCapture:'Alt+Q',sessionSummary:'Alt+Y',
   },
   notifications:true,autoSync:true,confirmOnDelete:true,dateFormat:'MM/DD/YYYY',
-  googleConnected:false,googleEmail:null,platform:'win32',appVersion:'9.8.0',agingThresholdDays:5,
+  googleConnected:false,googleEmail:null,platform:'win32',appVersion:'9.9.2',agingThresholdDays:5,
 };
 
 let settings = JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
@@ -85,6 +85,10 @@ function allStatuses(){return[{id:'todo',name:'To Do',color:'#1547C8'},{id:'inpr
 function statusName(id){return allStatuses().find(s=>s.id===id)?.name||id;}
 
 async function init(){
+  // Populate #main-content synchronously so JAWS builds a complete virtual buffer before async IPC resolves
+  applyTheme();
+  const _initRoot=document.getElementById('main-content');
+  if(_initRoot)_initRoot.innerHTML=renderDashboard();
   if(IS_ELECTRON){
     window.electronAPI.onInitSettings(s=>{applySettings(s);});
     window.electronAPI.onSystemTheme(t=>{systemDark=t==='dark';applyTheme();});
@@ -95,8 +99,9 @@ async function init(){
     const local=await window.electronAPI.localLoad();
     if(local.data)applyDataSnapshot(local.data);
     if(s.autoSync&&s.googleConnected&&s.driveFolderId) syncDrive();
-  } else { applyTheme(); }
+  }
   nav('dashboard',document.querySelector('[data-view=dashboard]'));
+  {const m=document.getElementById('main');if(m){m.setAttribute('aria-busy','true');setTimeout(()=>m.removeAttribute('aria-busy'),100);}}
   if(!settings.hasSeenOnboarding||!settings.focusModeUser) setTimeout(openSetupModal, 500);
   applyAppMode();
   document.addEventListener('keydown',handleKey);
@@ -239,7 +244,7 @@ function nav(view,btn,settingsTab){
   else if(view==='onboarding')root.innerHTML=renderOnboarding();
   else if(view==='settings'){root.innerHTML=renderSettings();if(settingsTab)showSettingsTab(settingsTab);}
   else if(view==='whats-new')root.innerHTML=renderWhatsNew();
-  requestAnimationFrame(()=>{announce(`Navigated to ${title}.`);setTimeout(()=>{const h=root.querySelector('h1,h2,h3');if(h){if(!h.hasAttribute('tabindex'))h.setAttribute('tabindex','-1');h.focus();}else root.focus();},100);});
+  requestAnimationFrame(()=>{announce(`Navigated to ${title}.`);setTimeout(()=>{root.focus();requestAnimationFrame(()=>{const h=root.querySelector('h1,h2,h3');if(h){if(!h.hasAttribute('tabindex'))h.setAttribute('tabindex','-1');h.focus();}});},400);});
 }
 function renderDashboard(){
   const _setupNotice=settings.focusModeUser?'':`<div class="card" role="note" style="margin-bottom:16px;border-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,var(--surface))"><strong style="display:block;margin-bottom:6px"><span aria-hidden="true">👤</span> Complete your setup</strong><p style="font-size:.86rem;margin-bottom:8px">Enter your name in <strong>Settings → General</strong> as the Focus Mode User to personalize your Daily Briefing and Focus Mode.</p><button class="btn btn-primary btn-sm" onclick="nav('settings',null,'general')">Open Settings</button></div>`;
@@ -283,7 +288,7 @@ function saveAsTemplate(){const name=document.getElementById('t-name').value.tri
 function useTemplate(id){const tmpl=templates.find(t=>t.id===id);if(!tmpl)return;openAddTask();document.getElementById('t-name').value=tmpl.name;document.getElementById('t-desc').value=tmpl.data.desc||'';document.getElementById('t-priority').value=tmpl.data.priority||'medium';document.getElementById('t-recur').value=tmpl.data.recur||'none';document.getElementById('t-color').value=tmpl.data.colorLabel||'';if(tmpl.data.projectId)document.getElementById('t-project').value=tmpl.data.projectId;announce(`Template "${tmpl.name}" loaded. Edit and save.`);}
 function deleteTemplate(id){const t=templates.find(t=>t.id===id);templates=templates.filter(t=>t.id!==id);nav('templates',document.querySelector('[data-view=templates]'));announce('Template deleted.');toast('Template deleted.');}
 
-function renderCalendar(){const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];const first=new Date(calYear,calMonth,1),last=new Date(calYear,calMonth+1,0).getDate(),dow=first.getDay();const byDate={};tasks.forEach(t=>{if(!byDate[t.due])byDate[t.due]=[];byDate[t.due].push(t);});const msByDate={};milestones.forEach(m=>{if(!msByDate[m.date])msByDate[m.date]=[];msByDate[m.date].push(m);});let cells='';const total=Math.ceil((dow+last)/7)*7;for(let i=0,day=1;i<total;i++){if(i<dow||day>last){cells+=`<div class="cal-day other" aria-hidden="true"></div>`;continue;}const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;const isTod=calYear===today.getFullYear()&&calMonth===today.getMonth()&&day===today.getDate();const dts=byDate[ds]||[];const mts=msByDate[ds]||[];const dayName=DAYS[(dow+day-1)%7];const lbl=`${dayName}, ${MONTHS[calMonth]} ${day}${isTod?', today':''}${dts.length?`, ${dts.length} task${dts.length>1?'s':''}`:''} ${mts.length?`, ${mts.length} milestone`:''}.`;cells+=`<div class="cal-day${isTod?' today':''}${mts.length?' milestone':''}" tabindex="0" role="button" aria-label="${lbl}" data-caldate="${ds}" onclick="calDayClick('${ds}',${dts.length})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();calDayClick('${ds}',${dts.length});}"><div class="cal-dn" aria-hidden="true">${day}</div>${mts.map(m=>`<div class="cal-milestone"><span aria-hidden="true">🏁</span> ${esc(m.name)}</div>`).join('')}${dts.slice(0,2).map(t=>`<div class="cal-ev">${esc(t.name)}</div>`).join('')}${dts.length>2?`<div style="font-size:.65rem;color:var(--muted)">+${dts.length-2} more</div>`:''}</div>`;day++;}return`<div class="card"><div class="cal-nav"><button class="btn btn-secondary btn-sm" id="cal-prev" aria-label="Previous month">‹ Prev</button><div class="cal-month-lbl" aria-live="polite" aria-atomic="true">${MONTHS[calMonth]} ${calYear}</div><button class="btn btn-secondary btn-sm" id="cal-next" aria-label="Next month">Next ›</button></div><div role="application" aria-label="Calendar grid — use arrow keys to move between days."><div class="cal-grid" role="group" aria-label="Calendar ${MONTHS[calMonth]} ${calYear}."><div class="cal-hdr" aria-hidden="true">Sun</div><div class="cal-hdr" aria-hidden="true">Mon</div><div class="cal-hdr" aria-hidden="true">Tue</div><div class="cal-hdr" aria-hidden="true">Wed</div><div class="cal-hdr" aria-hidden="true">Thu</div><div class="cal-hdr" aria-hidden="true">Fri</div><div class="cal-hdr" aria-hidden="true">Sat</div>${cells}</div></div></div>`;}
+function renderCalendar(){const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];const DAYS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];const first=new Date(calYear,calMonth,1),last=new Date(calYear,calMonth+1,0).getDate(),dow=first.getDay();const byDate={};tasks.forEach(t=>{if(!byDate[t.due])byDate[t.due]=[];byDate[t.due].push(t);});const msByDate={};milestones.forEach(m=>{if(!msByDate[m.date])msByDate[m.date]=[];msByDate[m.date].push(m);});let cells='';const total=Math.ceil((dow+last)/7)*7;for(let i=0,day=1;i<total;i++){if(i<dow||day>last){cells+=`<div class="cal-day other" aria-hidden="true"></div>`;continue;}const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;const isTod=calYear===today.getFullYear()&&calMonth===today.getMonth()&&day===today.getDate();const dts=byDate[ds]||[];const mts=msByDate[ds]||[];const dayName=DAYS[(dow+day-1)%7];const lbl=`${dayName}, ${MONTHS[calMonth]} ${day}${isTod?', today':''}${dts.length?`, ${dts.length} task${dts.length>1?'s':''}`:''} ${mts.length?`, ${mts.length} milestone`:''}.`;cells+=`<div class="cal-day${isTod?' today':''}${mts.length?' milestone':''}" tabindex="0" role="button" aria-label="${lbl}" data-caldate="${ds}" onclick="calDayClick('${ds}',${dts.length})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();calDayClick('${ds}',${dts.length});}"><div class="cal-dn" aria-hidden="true">${day}</div>${mts.map(m=>`<div class="cal-milestone"><span aria-hidden="true">🏁</span> ${esc(m.name)}</div>`).join('')}${dts.slice(0,2).map(t=>`<div class="cal-ev">${esc(t.name)}</div>`).join('')}${dts.length>2?`<div style="font-size:.65rem;color:var(--muted)">+${dts.length-2} more</div>`:''}</div>`;day++;}return`<div class="card"><div class="cal-nav"><button class="btn btn-secondary btn-sm" id="cal-prev" aria-label="Previous month">‹ Prev</button><div class="cal-month-lbl" aria-live="polite" aria-atomic="true">${MONTHS[calMonth]} ${calYear}</div><button class="btn btn-secondary btn-sm" id="cal-next" aria-label="Next month">Next ›</button></div><div class="cal-grid" role="group" aria-label="Calendar ${MONTHS[calMonth]} ${calYear}. Use arrow keys to navigate between days."><div class="cal-hdr" aria-hidden="true">Sun</div><div class="cal-hdr" aria-hidden="true">Mon</div><div class="cal-hdr" aria-hidden="true">Tue</div><div class="cal-hdr" aria-hidden="true">Wed</div><div class="cal-hdr" aria-hidden="true">Thu</div><div class="cal-hdr" aria-hidden="true">Fri</div><div class="cal-hdr" aria-hidden="true">Sat</div>${cells}</div></div>`;}
 function bindCalNav(){document.getElementById('cal-prev').onclick=()=>{calMonth--;if(calMonth<0){calMonth=11;calYear--;}document.getElementById('main-content').innerHTML=renderCalendar();bindCalNav();announce(new Date(calYear,calMonth).toLocaleString('default',{month:'long',year:'numeric'}));};document.getElementById('cal-next').onclick=()=>{calMonth++;if(calMonth>11){calMonth=0;calYear++;}document.getElementById('main-content').innerHTML=renderCalendar();bindCalNav();announce(new Date(calYear,calMonth).toLocaleString('default',{month:'long',year:'numeric'}));};const grid=document.querySelector('.cal-grid');if(grid)grid.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;const days=[...grid.querySelectorAll('[role=button][data-caldate]')];const idx=days.indexOf(document.activeElement);if(idx===-1)return;e.preventDefault();const delta={ArrowRight:1,ArrowLeft:-1,ArrowDown:7,ArrowUp:-7}[e.key];const next=idx+delta;if(next>=0&&next<days.length)days[next].focus();});}
 function calDayClick(ds,count){if(count){searchText=ds;nav('tasks',document.querySelector('[data-view=tasks]'));announce(`Showing ${count} task${count!==1?'s':''} due on ${ds}.`);}else{announce('No tasks due on this date.');}}
 
@@ -351,9 +356,16 @@ function renderWhatsNew(){
   return `<div role="region" aria-label="What's New in VantagePM">
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
     <h2 style="font-size:1.15rem;font-weight:800;margin:0">What's New in VantagePM</h2>
-    <span class="badge badge-done">v9.8.0 current</span>
+    <span class="badge badge-done">v9.9.2 current</span>
   </div>
   <p style="font-size:.85rem;color:var(--muted);margin-bottom:24px">Latest features and fixes, most recent first.</p>
+
+  <section class="card" style="margin-bottom:16px">
+    <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.9.2</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">September 2026</span></div>
+    <ul style="list-style:disc;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:.88rem">
+      <li><strong>JAWS virtual buffer rebuild fix</strong> — When any modal opened, <code>#app</code> received <code>aria-hidden="true"</code>, causing JAWS to drop its virtual buffer contents. When the modal closed and <code>aria-hidden</code> was removed, JAWS received no signal to rebuild — leaving Browse Mode (virtual cursor) with a stale empty buffer for the rest of the session. Fixed by toggling <code>aria-busy</code> on the main landmark after every modal close, which JAWS uses as a trigger to re-scan and rebuild the virtual buffer.</li>
+    </ul>
+  </section>
 
   <section class="card" style="margin-bottom:16px">
     <div class="section-h" style="display:flex;align-items:center;gap:10px"><span>v9.8.0</span><span style="font-size:.76rem;color:var(--muted);font-weight:400">September 2026</span></div>
@@ -605,6 +617,7 @@ function closeModal(id){
     const fb=document.getElementById('focus-bar');if(fb){fb.inert=false;fb.removeAttribute('aria-hidden');}
     const tb=document.getElementById('timer-bar');if(tb){tb.inert=false;tb.removeAttribute('aria-hidden');}
     const ts=document.getElementById('toast');if(ts)ts.removeAttribute('aria-hidden');
+    const mEl=document.getElementById('main');if(mEl){mEl.setAttribute('aria-busy','true');setTimeout(()=>mEl.removeAttribute('aria-busy'),100);}
   }
   if(modalFocusReturn&&document.body.contains(modalFocusReturn))modalFocusReturn.focus();
   announce('Dialog closed.');
